@@ -108,7 +108,7 @@ public class UserController : ControllerBase
         else
             fileName = "ConfirmSuccess.html";
 
-        string path = Path.Combine(Environment.CurrentDirectory, @"Templates\", fileName);
+        string path = Path.Combine(Environment.CurrentDirectory, @"Templates", fileName);
         var str = new StreamReader(path);
         var mailText = await str.ReadToEndAsync();
         str.Close();

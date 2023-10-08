@@ -7,7 +7,7 @@ namespace Qydha.Services;
 
 public class UserRepo : IUserRepo
 {
-    private readonly ISMSService _smsService;
+    private readonly IMessageService _smsService;
     private readonly UpdatePhoneOTPRequestRepo _updatePhoneOTPRequestRepo;
     private readonly UpdateEmailRequestRepo _updateEmailRequestRepo;
 
@@ -15,7 +15,7 @@ public class UserRepo : IUserRepo
     private readonly OtpManager _otpManager;
     private readonly IMailingService _mailingService;
 
-    public UserRepo(IDbConnection dbConnection, ISMSService smsService, IMailingService mailingService, OtpManager otpManager, UpdatePhoneOTPRequestRepo updatePhoneOTPRequestRepo, UpdateEmailRequestRepo updateEmailRequestRepo)
+    public UserRepo(IDbConnection dbConnection, IMessageService smsService, IMailingService mailingService, OtpManager otpManager, UpdatePhoneOTPRequestRepo updatePhoneOTPRequestRepo, UpdateEmailRequestRepo updateEmailRequestRepo)
     {
         _updatePhoneOTPRequestRepo = updatePhoneOTPRequestRepo;
         _dbConnection = dbConnection;
@@ -233,17 +233,10 @@ public class UserRepo : IUserRepo
         // Compute OTP
         var otp = _otpManager.GenerateOTP();
 
-        var result = await _smsService.SendAsync(newPhone, $" رمز التحقق لتطبيق قيدها : {otp}");
+        var result = await _smsService.SendAsync(newPhone, otp);
 
-        if (!string.IsNullOrEmpty(result.ErrorMessage))
-            return new()
-            {
-                Error = new()
-                {
-                    Code = ErrorCodes.OTPSendingError,
-                    Message = $"OTP Error Code :: {result.ErrorCode} => message :: {result.ErrorMessage}"
-                }
-            };
+        if (!result.IsSuccess)
+            return new() { Error = result.Error };
 
         // SAVE REQUEST DATA 
         var otp_request = await _updatePhoneOTPRequestRepo.AddAsync(new()

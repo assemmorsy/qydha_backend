@@ -22,10 +22,12 @@ builder.Services.AddSwaggerGen();
 builder.Services.Configure<OTPSettings>(builder.Configuration.GetSection("OTP"));
 // twilio options 
 builder.Services.Configure<TwilioSettings>(builder.Configuration.GetSection("Twilio"));
-// twilio options 
+// JWT options 
 builder.Services.Configure<JWTSettings>(builder.Configuration.GetSection("Authentication"));
 // mail server settings
 builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("MailSettings"));
+// whatsapp  settings
+builder.Services.Configure<WhatsAppSettings>(builder.Configuration.GetSection("WhatsAppSettings"));
 
 // Authentication 
 builder.Services.AddAuthentication("Bearer")
@@ -73,7 +75,7 @@ builder.Services.Configure<ApiBehaviorOptions>(options =>
 // services 
 builder.Services.AddScoped<TokenManager>();
 builder.Services.AddTransient<OtpManager>();
-builder.Services.AddTransient<ISMSService, SMSService>();
+builder.Services.AddTransient<IMessageService, WhatsAppService>();
 builder.Services.AddTransient<IMailingService, MailingService>();
 
 

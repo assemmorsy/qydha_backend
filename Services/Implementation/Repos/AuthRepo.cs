@@ -1,6 +1,7 @@
 ﻿
 using System.Security.Claims;
 using Qydha.Entities;
+using Qydha.Mappers;
 using Qydha.Models;
 
 
@@ -12,10 +13,10 @@ public class AuthRepo : IAuthRepo
 {
     private readonly TokenManager _tokenManager;
     private readonly IUserRepo _userRepo;
-    private readonly ISMSService _smsService;
+    private readonly IMessageService _smsService;
     private readonly RegistrationOTPRequestRepo _registrationOTPRequestRepo;
     private readonly OtpManager _otpManager;
-    public AuthRepo(TokenManager tokenManager, IUserRepo userRepo, OtpManager otpManager, ISMSService smsService, RegistrationOTPRequestRepo registrationOTPRequestRepo)
+    public AuthRepo(TokenManager tokenManager, IUserRepo userRepo, OtpManager otpManager, IMessageService smsService, RegistrationOTPRequestRepo registrationOTPRequestRepo)
     {
         _tokenManager = tokenManager;
         _userRepo = userRepo;
@@ -45,7 +46,7 @@ public class AuthRepo : IAuthRepo
         };
     }
 
-    public async Task<OperationResult<string>> ConfirmRegistrationWithPhone(string otpCode, string requestId)
+    public async Task<OperationResult<TokenWithUserDataDto>> ConfirmRegistrationWithPhone(string otpCode, string requestId)
     {
         if (!_otpManager.VerifyOTP(otpCode))
             return new()
@@ -78,14 +79,16 @@ public class AuthRepo : IAuthRepo
                 new Claim("isAnonymous", user.Is_Anonymous.ToString()),
             };
         var jwtToken = _tokenManager.Generate(claims);
+        var mapper = new UserMapper();
+
         return new()
         {
-            Data = jwtToken,
+            Data = new() { Token = jwtToken, UserData = mapper.UserToUserDto(user) },
             Message = "User Registered Successfully"
         };
     }
 
-    public async Task<OperationResult<string>> Login(UserLoginDto dto)
+    public async Task<OperationResult<TokenWithUserDataDto>> Login(UserLoginDto dto)
     {
         var findUserRes = await _userRepo.FindUserByUsername(dto.Username);
         var user = findUserRes.Data;
@@ -114,9 +117,11 @@ public class AuthRepo : IAuthRepo
                 new Claim("isAnonymous", user.Is_Anonymous.ToString()),
             };
         var jwtToken = _tokenManager.Generate(claims);
-        return new OperationResult<string>()
+        var mapper = new UserMapper();
+
+        return new()
         {
-            Data = jwtToken,
+            Data = new() { Token = jwtToken, UserData = mapper.UserToUserDto(user) },
             Message = "User Logged In Successfully."
         };
     }
@@ -145,17 +150,10 @@ public class AuthRepo : IAuthRepo
         // Compute OTP
         var otp = _otpManager.GenerateOTP();
 
-        var result = await _smsService.SendAsync(dto.Phone, $" رمز التحقق لتطبيق قيدها : {otp}");
+        var result = await _smsService.SendAsync(dto.Phone, otp);
 
-        if (!string.IsNullOrEmpty(result.ErrorMessage))
-            return new()
-            {
-                Error = new()
-                {
-                    Code = ErrorCodes.OTPSendingError,
-                    Message = $"OTP Error Code :: {result.ErrorCode} => message :: {result.ErrorMessage}"
-                }
-            };
+        if (!result.IsSuccess)
+            return new() { Error = result.Error };
 
         // SAVE REQUEST DATA 
         var otp_request = await _registrationOTPRequestRepo.AddAsync(new RegistrationOTPRequest()

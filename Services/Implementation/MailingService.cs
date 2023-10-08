@@ -65,7 +65,7 @@ public class MailingService : IMailingService
     public async Task<string> GenerateConfirmEmailBody(string otp, string requestId)
     {
         string fileName = "ConfirmEmailTemplate.html";
-        string path = Path.Combine(Environment.CurrentDirectory, @"Templates\", fileName);
+        string path = Path.Combine(Environment.CurrentDirectory, @"Templates", fileName);
         var str = new StreamReader(path);
         var mailText = await str.ReadToEndAsync();
         str.Close();

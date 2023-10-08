@@ -61,7 +61,7 @@ public class AuthController : ControllerBase
         var opRes = await _authRepo.Login(userLoginDto);
         if (!opRes.IsSuccess)
             return BadRequest(opRes.Error);
-        return Ok(new { Token = opRes.Data, opRes.Message });
+        return Ok(new { opRes.Data, opRes.Message });
     }
 
     [HttpPost("confirm-registration-with-phone/")]
@@ -70,7 +70,7 @@ public class AuthController : ControllerBase
         var opRes = await _authRepo.ConfirmRegistrationWithPhone(confirmPhoneDto.Code, confirmPhoneDto.RequestId);
         if (!opRes.IsSuccess)
             return BadRequest(opRes.Error);
-        return Ok(new { Token = opRes.Data, opRes.Message });
+        return Ok(new { opRes.Data, opRes.Message });
     }
 
     [HttpGet()]
