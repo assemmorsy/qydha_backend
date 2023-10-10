@@ -28,6 +28,9 @@ builder.Services.Configure<JWTSettings>(builder.Configuration.GetSection("Authen
 builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("MailSettings"));
 // whatsapp  settings
 builder.Services.Configure<WhatsAppSettings>(builder.Configuration.GetSection("WhatsAppSettings"));
+// Photo Settings
+builder.Services.Configure<PhotoSettings>(builder.Configuration.GetSection("PhotoSettings"));
+
 
 // Authentication 
 builder.Services.AddAuthentication("Bearer")
@@ -77,6 +80,7 @@ builder.Services.AddScoped<TokenManager>();
 builder.Services.AddTransient<OtpManager>();
 builder.Services.AddTransient<IMessageService, WhatsAppService>();
 builder.Services.AddTransient<IMailingService, MailingService>();
+builder.Services.AddTransient<IFileService, GoogleCloudFileService>();
 
 
 

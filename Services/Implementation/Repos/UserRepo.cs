@@ -1,6 +1,8 @@
 ﻿using System.Data;
 using Dapper;
+using Microsoft.Extensions.Options;
 using Qydha.Entities;
+using Qydha.Helpers;
 using Qydha.Models;
 
 namespace Qydha.Services;
@@ -10,12 +12,13 @@ public class UserRepo : IUserRepo
     private readonly IMessageService _smsService;
     private readonly UpdatePhoneOTPRequestRepo _updatePhoneOTPRequestRepo;
     private readonly UpdateEmailRequestRepo _updateEmailRequestRepo;
-
+    private readonly IFileService _fileService;
     private readonly IDbConnection _dbConnection;
     private readonly OtpManager _otpManager;
     private readonly IMailingService _mailingService;
+    private readonly PhotoSettings _photoSettings;
 
-    public UserRepo(IDbConnection dbConnection, IMessageService smsService, IMailingService mailingService, OtpManager otpManager, UpdatePhoneOTPRequestRepo updatePhoneOTPRequestRepo, UpdateEmailRequestRepo updateEmailRequestRepo)
+    public UserRepo(IDbConnection dbConnection, IMessageService smsService, IOptions<PhotoSettings> photoSettings, IFileService fileService, IMailingService mailingService, OtpManager otpManager, UpdatePhoneOTPRequestRepo updatePhoneOTPRequestRepo, UpdateEmailRequestRepo updateEmailRequestRepo)
     {
         _updatePhoneOTPRequestRepo = updatePhoneOTPRequestRepo;
         _dbConnection = dbConnection;
@@ -23,6 +26,8 @@ public class UserRepo : IUserRepo
         _otpManager = otpManager;
         _mailingService = mailingService;
         _updateEmailRequestRepo = updateEmailRequestRepo;
+        _fileService = fileService;
+        _photoSettings = photoSettings.Value;
     }
 
     public async Task<OperationResult<User>> AddUser(User user)
@@ -135,15 +140,6 @@ public class UserRepo : IUserRepo
     {
         var opRes = await FindUserByEmail(email);
         return opRes.IsSuccess && opRes.Data is not null;
-    }
-    public async Task<bool> UpdateUserAvatar(string userId, string avatar_url, string avatar_path)
-    {
-        var sql = @"UPDATE USERS 
-                    SET avatar_url = @avatar_url , 
-                        avatar_path = @avatar_path 
-                    WHERE id = @userId;";
-        var effectedRows = await _dbConnection.ExecuteAsync(sql, new { userId, avatar_url, avatar_path });
-        return effectedRows == 1;
     }
     public async Task<OperationResult<User>> SaveUserFromRegistrationOTPRequest(RegistrationOTPRequest otpRequest)
     {
@@ -318,7 +314,6 @@ public class UserRepo : IUserRepo
         // RETURN SUCCESS
         return emailSendingRes;
     }
-
     public async Task<OperationResult<bool>> ConfirmEmailUpdate(string code, string requestId)
     {
 
@@ -340,5 +335,55 @@ public class UserRepo : IUserRepo
         if (!updateEmailSuccess || !updateIsEmailConfirmedSuccess)
             return new() { Error = new() { Code = ErrorCodes.UserNotFound, Message = "User Not Found" } };
         return new() { Data = true, Message = "Email updated successfully" };
+    }
+
+    public async Task<OperationResult<User>> UploadUserPhoto(string userId, IFormFile file)
+    {
+        var validationRes = _photoSettings.ValidateFile(file);
+        if (!validationRes.IsSuccess) return new() { Error = validationRes.Error };
+
+        var findUserRes = await FindUserById(userId);
+        if (!findUserRes.IsSuccess) return findUserRes;
+
+        var user = findUserRes.Data;
+        if (user!.Avatar_Path is not null && user!.Avatar_Url is not null)
+        {
+            // var deleteFileRes = 
+            await _fileService.DeleteFile(user.Avatar_Path);
+            // if (!deleteFileRes.IsSuccess) return new() { Error = deleteFileRes.Error };
+            user.Avatar_Path = null;
+            user.Avatar_Url = null;
+        }
+        var uploadFileRes = await _fileService.UploadFile("avatars/", file);
+        if (!uploadFileRes.IsSuccess)
+            return new() { Error = uploadFileRes.Error };
+
+        user.Avatar_Path = uploadFileRes.Data!.Path;
+        user.Avatar_Url = uploadFileRes.Data.Url;
+
+        var updateUserRes = await UpdateUser(user);
+
+        return updateUserRes;
+    }
+
+    public async Task<OperationResult<bool>> DeleteUser(string userId, string password)
+    {
+        var findUserRes = await FindUserById(userId);
+        if (!findUserRes.IsSuccess) return new() { Error = findUserRes.Error };
+        var user = findUserRes.Data;
+        if (!BCrypt.Net.BCrypt.Verify(password, user!.Password_Hash))
+            return new() { Error = new() { Code = ErrorCodes.InvalidCredentials, Message = "incorrect password" } };
+
+        if (user.Avatar_Path is not null)
+            await _fileService.DeleteFile(user.Avatar_Path);
+        var sql = @"Delete from Users
+                    WHERE id = @Id;";
+        var effectedRows = await _dbConnection.ExecuteAsync(sql, new { user.Id });
+        if (effectedRows != 1) return new() { Error = new Error() { Code = ErrorCodes.UserNotFound, Message = "User Not Found" } };
+        return new()
+        {
+            Data = true,
+            Message = "User Deleted Successfully"
+        };
     }
 }

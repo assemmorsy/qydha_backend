@@ -1,6 +1,6 @@
 ﻿using Qydha.Models;
 
-namespace Qydha;
+namespace Qydha.Helpers;
 
 public class PhotoSettings
 {
@@ -8,6 +8,8 @@ public class PhotoSettings
     public int MaxBytes { get; set; }
 
     public ICollection<string> AcceptedFileTypes { get; set; } = new List<string>();
+
+
     public bool IsValidSize(long size)
     {
         return size <= MaxBytes;
@@ -15,22 +17,22 @@ public class PhotoSettings
     public bool IsValidMIME(string mime)
     {
         mime = mime.ToLower();
-        return AcceptedFileTypes.Any(x => x.Equals(mime));
+        return AcceptedFileTypes.Any(x => $".{x.ToLower()}".Equals(mime));
     }
-    public OperationResult<IFormFile> ValidateFile(IFormFile file)
+    public OperationResult<bool> ValidateFile(IFormFile file)
     {
         var errors = new List<string>();
 
         if (file.Length == 0)
             errors.Add("File Can't be empty");
         if (!IsValidSize(file.Length))
-            errors.Add("File size exeeded the limit");
+            errors.Add("File size exceeded the limit");
         if (!IsValidMIME(Path.GetExtension(file.FileName)))
             errors.Add("File Type Not Accepted");
 
         if (errors.Count > 0)
         {
-            return new OperationResult<IFormFile>
+            return new OperationResult<bool>
             {
                 Error = new()
                 {
@@ -39,6 +41,6 @@ public class PhotoSettings
                 }
             };
         }
-        return new OperationResult<IFormFile> { Data = file, Message = "valid file" };
+        return new OperationResult<bool> { Data = true, Message = "valid file" };
     }
 }

@@ -114,4 +114,54 @@ public class UserController : ControllerBase
         str.Close();
         return Content(mailText, "text/html");
     }
+
+
+    [HttpPatch("me/update-avatar")]
+    public async Task<IActionResult> UpdateUserAvatar([FromForm] IFormFile file)
+    {
+        string? userId = User.Claims.FirstOrDefault(c => c.Type == "userId")?.Value;
+        if (userId is null)
+            return BadRequest(new Error() { Code = ErrorCodes.InvalidToken, Message = "Invalid token user id not provided" });
+
+        var uploadUserPhotoRes = await _userRepo.UploadUserPhoto(userId, file);
+        if (!uploadUserPhotoRes.IsSuccess)
+            return BadRequest(uploadUserPhotoRes.Error);
+        var mapper = new UserMapper();
+        return Ok(new { Data = mapper.UserToUserDto(uploadUserPhotoRes.Data!) });
+    }
+
+    [HttpPut("me/")]
+    public async Task<IActionResult> UpdateUserData(UpdateUserDto updateUserDto)
+    {
+        string? userId = User.Claims.FirstOrDefault(c => c.Type == "userId")?.Value;
+        if (userId is null)
+            return BadRequest(new Error() { Code = ErrorCodes.InvalidToken, Message = "Invalid token user id not provided" });
+        var getUserRes = await _userRepo.FindUserById(userId);
+        if (!getUserRes.IsSuccess)
+            return BadRequest(getUserRes.Error);
+        var user = getUserRes.Data;
+
+        user!.Name = updateUserDto.Name;
+        user!.Birth_Date = updateUserDto.BirthDate;
+
+        var updateUserRes = await _userRepo.UpdateUser(user);
+        if (!updateUserRes.IsSuccess)
+            return BadRequest(updateUserRes.Error);
+        var mapper = new UserMapper();
+        return Ok(new { Data = mapper.UserToUserDto(updateUserRes.Data!) });
+    }
+
+    [HttpDelete("me/")]
+    public async Task<IActionResult> DeleteUser(DeleteUserDto deleteUserDto)
+    {
+        string? userId = User.Claims.FirstOrDefault(c => c.Type == "userId")?.Value;
+        if (userId is null)
+            return BadRequest(new Error() { Code = ErrorCodes.InvalidToken, Message = "Invalid token user id not provided" });
+
+        var deleteUserRes = await _userRepo.DeleteUser(userId, deleteUserDto.Password);
+        if (!deleteUserRes.IsSuccess)
+            return BadRequest(deleteUserRes.Error);
+
+        return Ok(new { deleteUserRes.Message });
+    }
 }

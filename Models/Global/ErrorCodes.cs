@@ -22,6 +22,9 @@ public static class ErrorCodes
     public const string OTPSendingError = "4099";
 
     public const string DbUniqueViolation = "4100";
+    public const string FileUploadError = "4101";
+    public const string FileDeleteError = "4102";
+
 
     public const string ServerError = "5000";
     public const string UnknownError = "1000";

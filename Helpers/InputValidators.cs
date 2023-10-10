@@ -4,6 +4,13 @@ namespace Qydha.Helpers;
 
 public static class InputValidators
 {
+
+    public static class Name
+    {
+        public const string Pattern = @"^[A-Za-z\u0621-\u064A0-9\s]{4,}$";
+        public const string ErrorMessage = "Name should contain at least 4 characters and can only contain Arabic, English alphabet characters, numbers, or spaces.";
+    }
+
     public static class Email
     {
         public const string Pattern = @"^\w+([-+.']\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*$";
