@@ -15,13 +15,13 @@ public class WebHookDto
         @$"
         Purchase type : {Type}   
         Purchase id : {Id}   
-        CreateDate : {CreateDate.ToLongTimeString()}
+        CreateDate : {CreateDate}
         OldUserId : {OldUserId}
         NewUserId : {NewUserId}
         Data : 
             userId : {Data?.userId}
-            PurchaseDate : {Data?.PurchaseDate.ToLongTimeString()}
-            ExpirationDate : {Data?.ExpirationDate?.ToLongTimeString()}
+            PurchaseDate : {Data?.PurchaseDate}
+            ExpirationDate : {Data?.ExpirationDate}
             ProductSku : {Data?.ProductSku}
         ";
     }

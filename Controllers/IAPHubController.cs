@@ -14,11 +14,11 @@ public class IAPHubController : ControllerBase
     public IActionResult IApHubWebHook([FromBody] WebHookDto webHookDto)
     {
         if (!Request.Headers.TryGetValue("x-auth-token", out var authToken))
-            return Unauthorized("x-auth-token header is missing.");
+            return Unauthorized(new { Error = new Error() { Code = ErrorCodes.InvalidIAPHupToken, Message = "x-auth-token header is Missing" } });
 
         string tokenValue = authToken.ToString();
         string webhookKey = "Nm8tAk4zxH1QsXZqXpwoHijwtjz1kEq";
-        if (tokenValue != webhookKey) return Unauthorized("x-auth-token header is Wrong.");
+        if (tokenValue != webhookKey) return Unauthorized(new { Error = new Error() { Code = ErrorCodes.InvalidIAPHupToken, Message = "x-auth-token header is wrong." } });
 
         Console.WriteLine(webHookDto);
 
