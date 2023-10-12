@@ -36,5 +36,8 @@
     <EmbeddedResource Include="Migrations\003_CreateUpdatePhoneOtpTable.sql" />
     <EmbeddedResource Include="Migrations\004_CreateUpdateEmailTable.sql" />
   </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Entities\IAPHubEntities\" />
+  </ItemGroup>
 
 </Project>
