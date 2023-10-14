@@ -26,6 +26,8 @@ public static class ErrorCodes
     public const string DbUniqueViolation = "4100";
     public const string FileUploadError = "4101";
     public const string FileDeleteError = "4102";
+    public const string UnhandledIAPHubTransactionType = "4103";
+    public const string FreeSubscriptionUsedExceededTheAllowedNumber = "4104";
 
 
     public const string ServerError = "5000";

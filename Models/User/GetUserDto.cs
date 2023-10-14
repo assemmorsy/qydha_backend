@@ -1,7 +1,11 @@
-﻿namespace Qydha.Models;
+﻿using Microsoft.Extensions.Options;
+using Qydha.Helpers;
+
+namespace Qydha.Models;
 
 public class GetUserDto
 {
+
     public Guid Id { get; set; }
     public string? Username { get; set; }
     public string? Name { get; set; }
@@ -14,5 +18,8 @@ public class GetUserDto
     public bool IsPhoneConfirmed { get; set; }
     public bool IsEmailConfirmed { get; set; }
     public string? AvatarUrl { get; set; }
+    public DateTime? ExpireDate { get; set; }
+    public int FreeSubscriptionUsed { get; set; }
+
 }
 

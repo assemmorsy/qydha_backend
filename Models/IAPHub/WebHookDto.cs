@@ -2,6 +2,7 @@
 
 public class WebHookDto
 {
+    
     public string Id { get; set; } = string.Empty;
     public string Type { get; set; } = string.Empty;
     public DateTime CreateDate { get; set; }
@@ -13,15 +14,15 @@ public class WebHookDto
     {
         return
         @$"
-        Purchase type : {Type}   
-        Purchase id : {Id}   
+        Transaction type : {Type}   
+        Transaction id : {Id}   
         CreateDate : {CreateDate}
         OldUserId : {OldUserId}
         NewUserId : {NewUserId}
         Data : 
-            userId : {Data?.userId}
+            userId : {Data?.UserId}
+            PurchaseId : {Data?.Id}
             PurchaseDate : {Data?.PurchaseDate}
-            ExpirationDate : {Data?.ExpirationDate}
             ProductSku : {Data?.ProductSku}
         ";
     }
@@ -30,8 +31,8 @@ public class WebHookDto
 
 public class WebhookData
 {
-    public DateTime? ExpirationDate { get; set; }
+    public string Id { get; set; } = string.Empty;
     public DateTime PurchaseDate { get; set; }
     public string ProductSku { get; set; } = string.Empty;
-    public Guid userId { get; set; }
+    public Guid UserId { get; set; }
 }

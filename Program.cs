@@ -10,7 +10,7 @@ using Qydha.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+//  Add services to the container.
 var connectionString = builder.Configuration.GetConnectionString("postgres");
 builder.Services.AddSignalR();
 builder.Services.AddControllers().AddNewtonsoftJson();
@@ -31,6 +31,10 @@ builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("Mail
 builder.Services.Configure<WhatsAppSettings>(builder.Configuration.GetSection("WhatsAppSettings"));
 // Photo Settings
 builder.Services.Configure<PhotoSettings>(builder.Configuration.GetSection("PhotoSettings"));
+// IAPHub Settings
+builder.Services.Configure<IAPHubSettings>(builder.Configuration.GetSection("IAPHubSettings"));
+// Products Settings
+builder.Services.Configure<ProductsSettings>(builder.Configuration.GetSection("ProductsSettings"));
 
 
 // Authentication 
@@ -63,8 +67,7 @@ builder.Services.AddScoped<IAuthRepo, AuthRepo>();
 builder.Services.AddScoped<RegistrationOTPRequestRepo>();
 builder.Services.AddScoped<UpdatePhoneOTPRequestRepo>();
 builder.Services.AddScoped<UpdateEmailRequestRepo>();
-
-
+builder.Services.AddScoped<SubscriptionRepo>();
 
 
 //defined filters 

@@ -17,8 +17,10 @@ public class UserRepo : IUserRepo
     private readonly OtpManager _otpManager;
     private readonly IMailingService _mailingService;
     private readonly PhotoSettings _photoSettings;
+    private readonly OTPSettings _OTPSettings;
 
-    public UserRepo(IDbConnection dbConnection, IMessageService smsService, IOptions<PhotoSettings> photoSettings, IFileService fileService, IMailingService mailingService, OtpManager otpManager, UpdatePhoneOTPRequestRepo updatePhoneOTPRequestRepo, UpdateEmailRequestRepo updateEmailRequestRepo)
+
+    public UserRepo(IDbConnection dbConnection, IMessageService smsService, IOptions<OTPSettings> OTPSettings, IOptions<PhotoSettings> photoSettings, IFileService fileService, IMailingService mailingService, OtpManager otpManager, UpdatePhoneOTPRequestRepo updatePhoneOTPRequestRepo, UpdateEmailRequestRepo updateEmailRequestRepo)
     {
         _updatePhoneOTPRequestRepo = updatePhoneOTPRequestRepo;
         _dbConnection = dbConnection;
@@ -28,6 +30,7 @@ public class UserRepo : IUserRepo
         _updateEmailRequestRepo = updateEmailRequestRepo;
         _fileService = fileService;
         _photoSettings = photoSettings.Value;
+        _OTPSettings = OTPSettings.Value;
     }
 
     public async Task<OperationResult<User>> AddUser(User user)
@@ -253,11 +256,6 @@ public class UserRepo : IUserRepo
     }
     public async Task<OperationResult<bool>> ConfirmPhoneUpdate(string userId, string code, string requestId)
     {
-        if (!_otpManager.VerifyOTP(code))
-            return new()
-            {
-                Error = new() { Code = ErrorCodes.OTPExceededTimeLimit, Message = "OTP Exceed Time Limit" }
-            };
 
         var otp_request = await _updatePhoneOTPRequestRepo.FindAsync(requestId);
         if (otp_request is null)
@@ -265,11 +263,18 @@ public class UserRepo : IUserRepo
             {
                 Error = new() { Code = ErrorCodes.RegistrationRequestNotFound, Message = "Registration Request Not Found." }
             };
+
+        if ((otp_request.Created_On - DateTime.Now).TotalSeconds > _OTPSettings.TimeInSec)
+            return new()
+            {
+                Error = new() { Code = ErrorCodes.OTPExceededTimeLimit, Message = "OTP Exceed Time Limit" }
+            };
         if (otp_request.OTP != code || otp_request.User_Id.ToString() != userId)
             return new()
             {
                 Error = new() { Code = ErrorCodes.InvalidOTP, Message = "Invalid OTP." }
             };
+
         var updateSuccess = await UpdateUserPropertyById(userId, "phone", otp_request.Phone);
         if (!updateSuccess)
             return new() { Error = new() { Code = ErrorCodes.UserNotFound, Message = "User Not Found" } };
@@ -336,7 +341,6 @@ public class UserRepo : IUserRepo
             return new() { Error = new() { Code = ErrorCodes.UserNotFound, Message = "User Not Found" } };
         return new() { Data = true, Message = "Email updated successfully" };
     }
-
     public async Task<OperationResult<User>> UploadUserPhoto(string userId, IFormFile file)
     {
         var validationRes = _photoSettings.ValidateFile(file);
@@ -365,7 +369,6 @@ public class UserRepo : IUserRepo
 
         return updateUserRes;
     }
-
     public async Task<OperationResult<bool>> DeleteUser(string userId, string password)
     {
         var findUserRes = await FindUserById(userId);

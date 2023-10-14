@@ -14,5 +14,7 @@ public partial class UserMapper
     [MapProperty(nameof(User.Avatar_Url), nameof(GetUserDto.AvatarUrl))]
     [MapProperty(nameof(User.Birth_Date), nameof(GetUserDto.BirthDate))]
     [MapProperty(nameof(User.Last_Login), nameof(GetUserDto.LastLogin))]
-     public partial GetUserDto UserToUserDto(User user);
+    [MapProperty(nameof(User.Free_Subscription_Used), nameof(GetUserDto.FreeSubscriptionUsed))]
+    [MapProperty(nameof(User.Expire_Date), nameof(GetUserDto.ExpireDate))]
+    public partial GetUserDto UserToUserDto(User user);
 }

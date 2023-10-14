@@ -1,6 +1,8 @@
 ﻿
 using System.Security.Claims;
+using Microsoft.Extensions.Options;
 using Qydha.Entities;
+using Qydha.Helpers;
 using Qydha.Mappers;
 using Qydha.Models;
 
@@ -16,13 +18,15 @@ public class AuthRepo : IAuthRepo
     private readonly IMessageService _smsService;
     private readonly RegistrationOTPRequestRepo _registrationOTPRequestRepo;
     private readonly OtpManager _otpManager;
-    public AuthRepo(TokenManager tokenManager, IUserRepo userRepo, OtpManager otpManager, IMessageService smsService, RegistrationOTPRequestRepo registrationOTPRequestRepo)
+    private readonly OTPSettings _OTPSettings;
+    public AuthRepo(TokenManager tokenManager, IUserRepo userRepo, IOptions<OTPSettings> OTPSettings, OtpManager otpManager, IMessageService smsService, RegistrationOTPRequestRepo registrationOTPRequestRepo)
     {
         _tokenManager = tokenManager;
         _userRepo = userRepo;
         _smsService = smsService;
         _registrationOTPRequestRepo = registrationOTPRequestRepo;
         _otpManager = otpManager;
+        _OTPSettings = OTPSettings.Value;
     }
 
 
@@ -48,11 +52,6 @@ public class AuthRepo : IAuthRepo
 
     public async Task<OperationResult<TokenWithUserDataDto>> ConfirmRegistrationWithPhone(string otpCode, string requestId)
     {
-        if (!_otpManager.VerifyOTP(otpCode))
-            return new()
-            {
-                Error = new() { Code = ErrorCodes.OTPExceededTimeLimit, Message = "OTP Exceed Time Limit" }
-            };
 
         var otp_request = await _registrationOTPRequestRepo.FindAsync(requestId);
         if (otp_request is null)
@@ -66,6 +65,11 @@ public class AuthRepo : IAuthRepo
                 Error = new() { Code = ErrorCodes.InvalidOTP, Message = "Invalid OTP." }
             };
 
+        if ((otp_request.Created_On - DateTime.Now).TotalSeconds > _OTPSettings.TimeInSec)
+            return new()
+            {
+                Error = new() { Code = ErrorCodes.OTPExceededTimeLimit, Message = "OTP Exceed Time Limit" }
+            };
 
         var saveUserRes = await _userRepo.SaveUserFromRegistrationOTPRequest(otp_request);
         if (!saveUserRes.IsSuccess) return new() { Error = saveUserRes.Error };

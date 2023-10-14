@@ -10,15 +10,12 @@ public class OtpManager
 
     public OtpManager(IOptions<OTPSettings> OTPSettings)
     {
-        _totp = new Totp(Base32Encoding.ToBytes(OTPSettings.Value.Secret), step: OTPSettings.Value.TimeInSec); ;
+        _totp = new Totp(Base32Encoding.ToBytes(OTPSettings.Value.Secret)); ;
     }
     public string GenerateOTP()
     {
         return _totp.ComputeTotp();
     }
 
-    public bool VerifyOTP(string otpCode)
-    {
-        return _totp.VerifyTotp(otpCode, out long timeStepMatched, window: null);
-    }
+
 }

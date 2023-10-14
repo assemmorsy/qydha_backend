@@ -16,5 +16,7 @@ public class User
     public bool Is_Email_Confirmed { get; set; }
     public string? Avatar_Url { get; set; }
     public string? Avatar_Path { get; set; }
+    public DateTime? Expire_Date { get; set; } = null;
+    public int Free_Subscription_Used { get; set; } = 0;
 
 }
