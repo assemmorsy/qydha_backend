@@ -25,15 +25,22 @@ public class SubscriptionRepo
         var findUserRes = await _userRepo.FindUserById(purchase.User_Id.ToString());
         if (!findUserRes.IsSuccess)
             return new() { Error = findUserRes.Error };
-        if (findUserRes.Data!.Free_Subscription_Used >= _subscriptionSetting.FreeSubscriptionsAllowed)
-            return new() { Error = new() { Code = ErrorCodes.FreeSubscriptionUsedExceededTheAllowedNumber, Message = "Free Subscription Used Exceeded the Allowed Number" } };
+        if (purchase.ProductSku == "free_30" && findUserRes.Data!.Free_Subscription_Used >= _subscriptionSetting.FreeSubscriptionsAllowed)
+            return new()
+            {
+                Error = new()
+                {
+                    Code = ErrorCodes.FreeSubscriptionUsedExceededTheAllowedNumber
+                        ,
+                    Message = "Free Subscription Used Exceeded the Allowed Number"
+                }
+            };
 
         var sql = @"INSERT INTO 
                     Purchases ( iaphub_purchase_id , user_id , type , purchase_date , productSku ,number_of_days) 
-                    VALUES ( @IAPHub_Purchase_Id,  @User_Id , @Type ,@Purchase_Date ,@ProductSku , @Number_Of_Days )
-                    returning Id;";
+                    VALUES ( @IAPHub_Purchase_Id,  @User_Id , @Type ,@Purchase_Date ,@ProductSku , @Number_Of_Days );";
 
-        await _dbConnection.QuerySingleAsync<Guid>(sql,  purchase );
+        await _dbConnection.ExecuteAsync(sql, purchase);
 
         return new() { Data = true, Message = "Purchase Saved Successfully." };
     }
