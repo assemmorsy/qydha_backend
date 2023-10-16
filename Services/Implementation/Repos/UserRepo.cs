@@ -9,6 +9,7 @@ namespace Qydha.Services;
 
 public class UserRepo : IUserRepo
 {
+    #region  injections
     private readonly IMessageService _smsService;
     private readonly UpdatePhoneOTPRequestRepo _updatePhoneOTPRequestRepo;
     private readonly UpdateEmailRequestRepo _updateEmailRequestRepo;
@@ -18,7 +19,7 @@ public class UserRepo : IUserRepo
     private readonly IMailingService _mailingService;
     private readonly PhotoSettings _photoSettings;
     private readonly OTPSettings _OTPSettings;
-
+    #endregion
 
     public UserRepo(IDbConnection dbConnection, IMessageService smsService, IOptions<OTPSettings> OTPSettings, IOptions<PhotoSettings> photoSettings, IFileService fileService, IMailingService mailingService, OtpManager otpManager, UpdatePhoneOTPRequestRepo updatePhoneOTPRequestRepo, UpdateEmailRequestRepo updateEmailRequestRepo)
     {
@@ -33,6 +34,8 @@ public class UserRepo : IUserRepo
         _OTPSettings = OTPSettings.Value;
     }
 
+
+    #region Add User
     public async Task<OperationResult<User>> AddUser(User user)
     {
         var sql = @"INSERT INTO 
@@ -48,30 +51,46 @@ public class UserRepo : IUserRepo
             Message = "User Added Successfully"
         };
     }
-    public async Task<OperationResult<User>> UpdateUser(User user)
+
+    public async Task<OperationResult<User>> SaveUserFromRegistrationOTPRequest(RegistrationOTPRequest otpRequest)
     {
-        var sql = @"UPDATE USERS 
-                    SET username = @Username,
-                        name  = @Name ,
-                        password_hash = @Password_Hash ,
-                        phone = @Phone , 
-                        email = @Email ,
-                        is_anonymous = @Is_Anonymous ,
-                        birth_date = @Birth_Date ,
-                        last_login = @Last_Login ,
-                        is_phone_confirmed = @Is_Phone_Confirmed , 
-                        is_email_confirmed = @Is_Email_Confirmed,
-                        avatar_url = @Avatar_Url, 
-                        avatar_path = @Avatar_Path
-                    WHERE id = @Id;";
-        var effectedRows = await _dbConnection.ExecuteAsync(sql, user);
-        if (effectedRows != 1) return new OperationResult<User>() { Error = new Error() { Code = ErrorCodes.UserNotFound, Message = "User Not Found" } };
-        return new OperationResult<User>()
+        if (otpRequest.User_Id is not null)
         {
-            Data = user,
-            Message = "User Updated Successfully"
-        };
+            var findUserRes = await FindUserById(otpRequest.User_Id.Value.ToString());
+            if (!findUserRes.IsSuccess)
+            {
+                findUserRes.Error!.Code = ErrorCodes.AnonymousUserNotFound;
+                findUserRes.Error!.Message = "Anonymous User Not Found";
+                return findUserRes;
+            }
+
+            findUserRes.Data!.Username = otpRequest.Username;
+            findUserRes.Data!.Phone = otpRequest.Phone;
+            findUserRes.Data!.Last_Login = DateTime.UtcNow;
+            findUserRes.Data!.Is_Phone_Confirmed = true;
+            findUserRes.Data!.Password_Hash = otpRequest.Password_Hash;
+            findUserRes.Data!.Is_Anonymous = false;
+
+            return await UpdateUser(findUserRes.Data);
+        }
+        else
+        {
+            return await AddUser(new User()
+            {
+                Username = otpRequest.Username,
+                Password_Hash = otpRequest.Password_Hash,
+                Phone = otpRequest.Phone,
+                Created_On = DateTime.UtcNow,
+                Last_Login = DateTime.UtcNow,
+                Is_Phone_Confirmed = true,
+                Is_Anonymous = false
+            });
+        }
     }
+
+    #endregion
+
+    #region Get User Functions
     public async Task<OperationResult<User>> FindUserById(string userId)
     {
         var sql = "select *  from Users where id = @userId;";
@@ -82,19 +101,6 @@ public class UserRepo : IUserRepo
             Data = user,
             Message = "User Fetched Successfully"
         };
-    }
-    public async Task<bool> UpdateUserLastLoginToNow(string userId)
-    {
-        return await UpdateUserPropertyById(userId, "last_login", DateTime.UtcNow);
-    }
-    public async Task<bool> UpdateUserPropertyById<T>(string userId, string propName, T newValue)
-    {
-        var sql = @$"UPDATE USERS 
-                        SET {propName} = @newValue 
-                    where id = @userId;";
-
-        var effectedRows = await _dbConnection.ExecuteAsync(sql, new { userId = Guid.Parse(userId), newValue });
-        return effectedRows == 1;
     }
     public async Task<OperationResult<User>> FindUserByUsername(string username)
     {
@@ -144,40 +150,46 @@ public class UserRepo : IUserRepo
         var opRes = await FindUserByEmail(email);
         return opRes.IsSuccess && opRes.Data is not null;
     }
-    public async Task<OperationResult<User>> SaveUserFromRegistrationOTPRequest(RegistrationOTPRequest otpRequest)
+
+    #endregion
+
+    #region Update User
+    public async Task<OperationResult<User>> UpdateUser(User user)
     {
-        if (otpRequest.User_Id is not null)
+        var sql = @"UPDATE USERS 
+                    SET username = @Username,
+                        name  = @Name ,
+                        password_hash = @Password_Hash ,
+                        phone = @Phone , 
+                        email = @Email ,
+                        is_anonymous = @Is_Anonymous ,
+                        birth_date = @Birth_Date ,
+                        last_login = @Last_Login ,
+                        is_phone_confirmed = @Is_Phone_Confirmed , 
+                        is_email_confirmed = @Is_Email_Confirmed,
+                        avatar_url = @Avatar_Url, 
+                        avatar_path = @Avatar_Path
+                    WHERE id = @Id;";
+        var effectedRows = await _dbConnection.ExecuteAsync(sql, user);
+        if (effectedRows != 1) return new OperationResult<User>() { Error = new Error() { Code = ErrorCodes.UserNotFound, Message = "User Not Found" } };
+        return new OperationResult<User>()
         {
-            var findUserRes = await FindUserById(otpRequest.User_Id.Value.ToString());
-            if (!findUserRes.IsSuccess)
-            {
-                findUserRes.Error!.Code = ErrorCodes.AnonymousUserNotFound;
-                findUserRes.Error!.Message = "Anonymous User Not Found";
-                return findUserRes;
-            }
+            Data = user,
+            Message = "User Updated Successfully"
+        };
+    }
+    public async Task<bool> UpdateUserLastLoginToNow(string userId)
+    {
+        return await UpdateUserPropertyById(userId, "last_login", DateTime.UtcNow);
+    }
+    public async Task<bool> UpdateUserPropertyById<T>(string userId, string propName, T newValue)
+    {
+        var sql = @$"UPDATE USERS 
+                        SET {propName} = @newValue 
+                    where id = @userId;";
 
-            findUserRes.Data!.Username = otpRequest.Username;
-            findUserRes.Data!.Phone = otpRequest.Phone;
-            findUserRes.Data!.Last_Login = DateTime.UtcNow;
-            findUserRes.Data!.Is_Phone_Confirmed = true;
-            findUserRes.Data!.Password_Hash = otpRequest.Password_Hash;
-            findUserRes.Data!.Is_Anonymous = false;
-
-            return await UpdateUser(findUserRes.Data);
-        }
-        else
-        {
-            return await AddUser(new User()
-            {
-                Username = otpRequest.Username,
-                Password_Hash = otpRequest.Password_Hash,
-                Phone = otpRequest.Phone,
-                Created_On = DateTime.UtcNow,
-                Last_Login = DateTime.UtcNow,
-                Is_Phone_Confirmed = true,
-                Is_Anonymous = false
-            });
-        }
+        var effectedRows = await _dbConnection.ExecuteAsync(sql, new { userId = Guid.Parse(userId), newValue });
+        return effectedRows == 1;
     }
     public async Task<OperationResult<bool>> UpdateUserPassword(string userId, string oldPassword, string newPassword)
     {
@@ -190,7 +202,7 @@ public class UserRepo : IUserRepo
             return new() { Error = new() { Code = ErrorCodes.UserNotFound, Message = "User Not Found" } };
         return new() { Data = true, Message = "Password updated successfully" };
     }
-    public async Task<OperationResult<bool>> UpdateUserUsername(string userId, string password, string newUsername)
+    public async Task<OperationResult<User>> UpdateUserUsername(string userId, string password, string newUsername)
     {
         var findUserByUsernameRes = await FindUserByUsername(newUsername);
         if (findUserByUsernameRes.IsSuccess && findUserByUsernameRes.Data!.Id.ToString() != userId)
@@ -209,7 +221,9 @@ public class UserRepo : IUserRepo
         var updateSuccess = await UpdateUserPropertyById(userId, "username", newUsername);
         if (!updateSuccess)
             return new() { Error = new() { Code = ErrorCodes.UserNotFound, Message = "User Not Found" } };
-        return new() { Data = true, Message = "Username updated successfully" };
+        var user = findUserRes.Data;
+        user.Username = newUsername;
+        return new() { Data = user, Message = "Username updated successfully" };
     }
     public async Task<OperationResult<string>> UpdateUserPhone(string userId, string password, string newPhone)
     {
@@ -254,7 +268,7 @@ public class UserRepo : IUserRepo
 
 
     }
-    public async Task<OperationResult<bool>> ConfirmPhoneUpdate(string userId, string code, string requestId)
+    public async Task<OperationResult<User>> ConfirmPhoneUpdate(string userId, string code, string requestId)
     {
 
         var otp_request = await _updatePhoneOTPRequestRepo.FindAsync(requestId);
@@ -278,7 +292,10 @@ public class UserRepo : IUserRepo
         var updateSuccess = await UpdateUserPropertyById(userId, "phone", otp_request.Phone);
         if (!updateSuccess)
             return new() { Error = new() { Code = ErrorCodes.UserNotFound, Message = "User Not Found" } };
-        return new() { Data = true, Message = "Phone updated successfully" };
+        var findUserRes = await FindUserById(userId);
+        if (!findUserRes.IsSuccess)
+            return findUserRes;
+        return new() { Data = findUserRes.Data, Message = "Phone updated successfully" };
     }
     public async Task<OperationResult<string>> UpdateUserEmail(string userId, string password, string newEmail)
     {
@@ -369,6 +386,10 @@ public class UserRepo : IUserRepo
 
         return updateUserRes;
     }
+
+    #endregion
+
+    #region Delete User
     public async Task<OperationResult<bool>> DeleteUser(string userId, string password)
     {
         var findUserRes = await FindUserById(userId);
@@ -389,4 +410,6 @@ public class UserRepo : IUserRepo
             Message = "User Deleted Successfully"
         };
     }
+    #endregion
+
 }

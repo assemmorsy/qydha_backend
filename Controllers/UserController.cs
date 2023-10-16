@@ -55,8 +55,8 @@ public class UserController : ControllerBase
         var updateUsernameRes = await _userRepo.UpdateUserUsername(userId, changeUsernameDto.Password, changeUsernameDto.NewUsername);
         if (!updateUsernameRes.IsSuccess)
             return BadRequest(updateUsernameRes.Error);
-
-        return Ok(new { updateUsernameRes.Message });
+        var mapper = new UserMapper();
+        return Ok(new { Data = mapper.UserToUserDto(updateUsernameRes.Data!), updateUsernameRes.Message });
     }
 
     [HttpPatch("me/update-phone/")]
@@ -71,6 +71,7 @@ public class UserController : ControllerBase
 
         return Ok(new { Request_Id = updatePhoneRes.Data, updatePhoneRes.Message });
     }
+
     [HttpPost("me/confirm-phone-update/")]
     public async Task<IActionResult> ConfirmPhoneUpdate([FromBody] ConfirmPhoneDto confirmPhoneDto)
     {
@@ -81,7 +82,8 @@ public class UserController : ControllerBase
         var confirmPhoneUpdateRes = await _userRepo.ConfirmPhoneUpdate(userId, confirmPhoneDto.Code, confirmPhoneDto.RequestId);
         if (!confirmPhoneUpdateRes.IsSuccess)
             return BadRequest(confirmPhoneUpdateRes.Error);
-        return Ok(new { confirmPhoneUpdateRes.Message });
+        var mapper = new UserMapper();
+        return Ok(new { Data = mapper.UserToUserDto(confirmPhoneUpdateRes.Data!), confirmPhoneUpdateRes.Message });
     }
 
     [HttpPatch("me/update-email")]
@@ -127,7 +129,7 @@ public class UserController : ControllerBase
         if (!uploadUserPhotoRes.IsSuccess)
             return BadRequest(uploadUserPhotoRes.Error);
         var mapper = new UserMapper();
-        return Ok(new { Data = mapper.UserToUserDto(uploadUserPhotoRes.Data!) });
+        return Ok(new { Data = mapper.UserToUserDto(uploadUserPhotoRes.Data!), Message = uploadUserPhotoRes.Message });
     }
 
     [HttpPut("me/")]
@@ -148,7 +150,7 @@ public class UserController : ControllerBase
         if (!updateUserRes.IsSuccess)
             return BadRequest(updateUserRes.Error);
         var mapper = new UserMapper();
-        return Ok(new { Data = mapper.UserToUserDto(updateUserRes.Data!) });
+        return Ok(new { Data = mapper.UserToUserDto(updateUserRes.Data!), Message = updateUserRes.Message });
     }
 
     [HttpDelete("me/")]
