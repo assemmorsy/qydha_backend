@@ -32,6 +32,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Remove="Migrations\007_declareTriggerForInsertInPurchaseTable.sql" />
+    <None Remove="Migrations\008_alterUserTableToAddFCMToken.sql" />
   </ItemGroup>
 
 </Project>

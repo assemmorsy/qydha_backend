@@ -18,5 +18,5 @@ public class User
     public string? Avatar_Path { get; set; }
     public DateTime? Expire_Date { get; set; } = null;
     public int Free_Subscription_Used { get; set; } = 0;
-
+    public string FCM_Token { get; set; } = string.Empty;
 }

@@ -14,8 +14,8 @@ public class RegistrationOTPRequestRepo
     public async Task<RegistrationOTPRequest> AddAsync(RegistrationOTPRequest otp_request)
     {
         var sql = @"INSERT INTO 
-                    registration_otp_request ( username,  password_hash, phone ,otp ,created_on ,user_id ) 
-                    VALUES ( @Username , @Password_Hash, @Phone,@OTP ,@Created_On ,@User_Id )
+                    registration_otp_request ( username,  password_hash, phone ,otp ,created_on ,user_id , fcm_token ) 
+                    VALUES ( @Username , @Password_Hash, @Phone, @OTP ,@Created_On ,@User_Id  ,@FCM_Token)
                     RETURNING Id;";
         var otp_requestId = await _dbConnection.QuerySingleAsync<Guid>(sql, otp_request);
         otp_request.Id = otp_requestId;

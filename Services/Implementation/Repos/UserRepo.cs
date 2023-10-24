@@ -1,4 +1,5 @@
-﻿using System.Data;
+﻿using System;
+using System.Data;
 using Dapper;
 using Microsoft.Extensions.Options;
 using Qydha.Entities;
@@ -39,9 +40,9 @@ public class UserRepo : IUserRepo
     public async Task<OperationResult<User>> AddUser(User user)
     {
         var sql = @"INSERT INTO 
-                    USERS ( username, name, password_hash, phone, email, is_anonymous, birth_date, created_on, last_login, avatar_url, avatar_path , is_phone_confirmed , is_email_confirmed ) 
+                    USERS ( username, name, password_hash, phone, email, is_anonymous, birth_date, created_on, last_login, avatar_url, avatar_path , is_phone_confirmed , is_email_confirmed , fcm_Token ) 
                     VALUES ( @Username , @Name , @Password_Hash, @Phone , @Email ,@Is_Anonymous , @Birth_Date , @Created_On , @Last_Login , @Avatar_Url ,@Avatar_Path ,
-                    @Is_Phone_Confirmed , @Is_Email_Confirmed )
+                    @Is_Phone_Confirmed , @Is_Email_Confirmed , @FCM_Token )
                     RETURNING Id;";
         var userId = await _dbConnection.QuerySingleAsync<Guid>(sql, user);
         user.Id = userId;
@@ -70,7 +71,8 @@ public class UserRepo : IUserRepo
             findUserRes.Data!.Is_Phone_Confirmed = true;
             findUserRes.Data!.Password_Hash = otpRequest.Password_Hash;
             findUserRes.Data!.Is_Anonymous = false;
-
+            if (!string.IsNullOrEmpty(otpRequest.FCM_Token))
+                findUserRes.Data!.FCM_Token = otpRequest.FCM_Token;
             return await UpdateUser(findUserRes.Data);
         }
         else
@@ -83,7 +85,8 @@ public class UserRepo : IUserRepo
                 Created_On = DateTime.UtcNow,
                 Last_Login = DateTime.UtcNow,
                 Is_Phone_Confirmed = true,
-                Is_Anonymous = false
+                Is_Anonymous = false,
+                FCM_Token = otpRequest.FCM_Token ?? ""
             });
         }
     }
@@ -168,7 +171,8 @@ public class UserRepo : IUserRepo
                         is_phone_confirmed = @Is_Phone_Confirmed , 
                         is_email_confirmed = @Is_Email_Confirmed,
                         avatar_url = @Avatar_Url, 
-                        avatar_path = @Avatar_Path
+                        avatar_path = @Avatar_Path,
+                        fcm_token = @FCM_Token
                     WHERE id = @Id;";
         var effectedRows = await _dbConnection.ExecuteAsync(sql, user);
         if (effectedRows != 1) return new OperationResult<User>() { Error = new Error() { Code = ErrorCodes.UserNotFound, Message = "User Not Found" } };

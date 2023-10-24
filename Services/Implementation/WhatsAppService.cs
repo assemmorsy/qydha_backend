@@ -62,6 +62,7 @@ public class WhatsAppService : IMessageService
         };
 
         HttpResponseMessage response = await httpClient.PostAsJsonAsync(new Uri(_whatsSettings.ApiUrl), body);
+        // TODO log this error
         if (!response.IsSuccessStatusCode)
             return new() { Error = new() { Code = ErrorCodes.OTPSendingError, Message = response.Content.ToString() ?? "unknown Error from whatsapp." } };
 

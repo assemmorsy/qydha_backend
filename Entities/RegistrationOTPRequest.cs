@@ -10,4 +10,5 @@ public class RegistrationOTPRequest
     public DateTime Created_On { get; set; } = DateTime.UtcNow;
     public Guid? User_Id { get; set; }
 
+    public string? FCM_Token { get; set; }
 }

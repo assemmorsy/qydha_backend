@@ -45,9 +45,7 @@ public static class InputValidators
 
     public static class Phone
     {
-        public const string Pattern = @"^\+\d{1,15}$";
-        public const string ErrorMessage = "Phone number must start with a plus sign (+) followed by the Country Code then the phone number.";
-
+        public const string ErrorMessage = "Phone number must start with a plus sign (+) followed by the Country Code then a valid the phone number.";
     }
 
 }

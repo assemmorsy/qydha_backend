@@ -1,0 +1,6 @@
+ALTER TABLE Users 
+ADD COLUMN FCM_Token VARCHAR(200) ;
+
+ALTER TABLE registration_otp_request 
+ADD COLUMN FCM_Token VARCHAR(200) ;
+

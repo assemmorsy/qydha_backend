@@ -5,14 +5,14 @@ using Microsoft.IdentityModel.Tokens;
 using Npgsql;
 using Qydha.Controllers.Attributes;
 using Qydha.Helpers;
-using Qydha.Hubs;
+// using Qydha.Hubs;
 using Qydha.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
 //  Add services to the container.
 var connectionString = builder.Configuration.GetConnectionString("postgres");
-builder.Services.AddSignalR();
+// builder.Services.AddSignalR();
 builder.Services.AddControllers().AddNewtonsoftJson();
 //  Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
@@ -116,7 +116,7 @@ app.UseAuthentication();
 
 app.UseAuthorization();
 
-app.MapHub<ChatHub>("/chat");
+// app.MapHub<ChatHub>("/chat");
 app.MapControllers();
 
 if (connectionString is not null)

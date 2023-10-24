@@ -30,9 +30,15 @@ public class AuthRepo : IAuthRepo
     }
 
 
-    public async Task<OperationResult<string>> LoginAsAnonymousAsync()
+    public async Task<OperationResult<string>> LoginAsAnonymousAsync(UserLoginAnonymousDto userLoginAnonymousDto)
     {
-        var anonymousUser = new User() { Created_On = DateTime.Now, Last_Login = DateTime.Now, Is_Anonymous = true };
+        var anonymousUser = new User()
+        {
+            Created_On = DateTime.Now,
+            Last_Login = DateTime.Now,
+            Is_Anonymous = true,
+            FCM_Token = userLoginAnonymousDto.FCMToken
+        };
         var registerAnonUserRes = await _userRepo.AddUser(anonymousUser);
         if (!registerAnonUserRes.IsSuccess)
             return new() { Error = new() { Code = ErrorCodes.UnknownError, Message = "Unknown Error" } };
@@ -166,7 +172,8 @@ public class AuthRepo : IAuthRepo
             Phone = dto.Phone,
             Password_Hash = BCrypt.Net.BCrypt.HashPassword(dto.Password),
             OTP = otp,
-            User_Id = userId is not null ? Guid.Parse(userId) : null
+            User_Id = userId is not null ? Guid.Parse(userId) : null,
+            FCM_Token = dto.FCMToken
         });
         // RETURN SUCCESS
         return new()

@@ -14,7 +14,9 @@ public class UserRegisterDTO
     public string Password { get; set; } = string.Empty;
 
     [Required]
-    [RegularExpression(InputValidators.Phone.Pattern, ErrorMessage = InputValidators.Phone.ErrorMessage)]
+    [PhoneNumber(ErrorMessage = InputValidators.Phone.ErrorMessage)]
     public string Phone { get; set; } = string.Empty;
+
+    public string FCMToken { get; set; } = string.Empty;
 
 }

@@ -20,9 +20,9 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("login-anonymous/")]
-    public async Task<IActionResult> LoginAsAnonymous()
+    public async Task<IActionResult> LoginAsAnonymous([FromBody] UserLoginAnonymousDto userLoginAnonymousDto)
     {
-        var opRes = await _authRepo.LoginAsAnonymousAsync();
+        var opRes = await _authRepo.LoginAsAnonymousAsync(userLoginAnonymousDto);
         if (!opRes.IsSuccess)
             return BadRequest(opRes.Error);
         return Ok(new { token = opRes.Data, opRes.Message });
@@ -44,7 +44,6 @@ public class AuthController : ControllerBase
     {
         string? userId = User.Claims.FirstOrDefault(c => c.Type == "userId")?.Value;
         string? isAnonymousStr = User.Claims.FirstOrDefault(c => c.Type == "isAnonymous")?.Value;
-
 
         if (isAnonymousStr is null || isAnonymousStr != "True" || userId is null)
             return BadRequest(new Error() { Code = ErrorCodes.AnonymousUserTokenNotProvided, Message = "Anonymous User Token Not Provided Correctly." });
