@@ -9,7 +9,6 @@ public class UpdateUserDto
     [RegularExpression(InputValidators.Name.Pattern, ErrorMessage = InputValidators.Name.ErrorMessage)]
     public string Name { get; set; } = string.Empty;
 
-    [Required]
-    [BirthDate(ErrorMessage = "your age should be at least 7 years.")]
-    public DateTime BirthDate { get; set; }
+    [BirthDate(ErrorMessage = "your age should be at least 7 years old and at most 140 years old .")]
+    public DateTime? BirthDate { get; set; }
 }

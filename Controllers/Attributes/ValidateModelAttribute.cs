@@ -14,7 +14,7 @@ public class ValidateModelAttribute : Attribute, IActionFilter
     {
         if (!context.ModelState.IsValid)
         {
-            var errors = context.ModelState.SelectMany(e => e.Value!.Errors.Select(e => e.ErrorMessage)).ToList().Aggregate((acc, e) => acc + e);
+            var errors = context.ModelState.SelectMany(e => e.Value!.Errors.Select(e => e.ErrorMessage)).ToList().Aggregate((acc, e) => $"{acc} ; {e} ");
 
             context.Result = new BadRequestObjectResult(new Error()
             {
