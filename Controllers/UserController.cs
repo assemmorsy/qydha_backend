@@ -14,9 +14,12 @@ namespace Qydha.Controllers;
 public class UserController : ControllerBase
 {
     private readonly IUserRepo _userRepo;
-    public UserController(IUserRepo userRepo)
+    private readonly NotificationRepo _notificationRepo;
+
+    public UserController(IUserRepo userRepo, NotificationRepo notificationRepo)
     {
         _userRepo = userRepo;
+        _notificationRepo = notificationRepo;
     }
     [HttpGet("me/")]
     public async Task<IActionResult> GetUser()
@@ -117,7 +120,6 @@ public class UserController : ControllerBase
         return Content(mailText, "text/html");
     }
 
-
     [HttpPatch("me/update-avatar")]
     public async Task<IActionResult> UpdateUserAvatar([FromForm] IFormFile file)
     {
@@ -166,4 +168,30 @@ public class UserController : ControllerBase
 
         return Ok(new { deleteUserRes.Message });
     }
+
+    [HttpGet("me/notifications")]
+    public async Task<IActionResult> GetUserNotifications([FromQuery] int pageSize = 10, [FromQuery] int pageNumber = 1, [FromQuery] bool? isRead = null)
+    {
+        string? userIdStr = User.Claims.FirstOrDefault(c => c.Type == "userId")?.Value;
+        if (userIdStr is null)
+            return BadRequest(new Error() { Code = ErrorCodes.InvalidToken, Message = "Invalid token user id not provided" });
+        if (!Guid.TryParse(userIdStr, out Guid userId))
+            return BadRequest(new Error() { Code = ErrorCodes.InvalidToken, Message = "Invalid token user id Incorrect" });
+        var res = await _notificationRepo.GetAllNotificationsOfUserById(userId, pageSize, pageNumber, isRead);
+        if (!res.IsSuccess) return BadRequest(res.Error);
+        return Ok(new { res.Data, res.Message });
+    }
+    [HttpPatch("me/notifications/{notificationId}/mark-as-read/")]
+    public async Task<IActionResult> MarkNotificationAsRead([FromRoute] int notificationId)
+    {
+        string? userIdStr = User.Claims.FirstOrDefault(c => c.Type == "userId")?.Value;
+        if (userIdStr is null)
+            return BadRequest(new Error() { Code = ErrorCodes.InvalidToken, Message = "Invalid token user id not provided" });
+        if (!Guid.TryParse(userIdStr, out Guid userId))
+            return BadRequest(new Error() { Code = ErrorCodes.InvalidToken, Message = "Invalid token user id Incorrect" });
+        var res = await _notificationRepo.MarkNotificationAsRead(userId, notificationId);
+        if (!res.IsSuccess) return BadRequest(res.Error);
+        return Ok(res.Message);
+    }
+
 }

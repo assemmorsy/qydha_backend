@@ -1,5 +1,7 @@
 using System.Data;
 using System.Text;
+using FirebaseAdmin;
+using Google.Apis.Auth.OAuth2;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using Npgsql;
@@ -10,7 +12,12 @@ using Qydha.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
+FirebaseApp.Create(new AppOptions()
+{
+    Credential = GoogleCredential.FromFile("firebase_private_key.json")
+});
 //  Add services to the container.
+
 var connectionString = builder.Configuration.GetConnectionString("postgres");
 // builder.Services.AddSignalR();
 builder.Services.AddControllers().AddNewtonsoftJson();
@@ -68,6 +75,8 @@ builder.Services.AddScoped<RegistrationOTPRequestRepo>();
 builder.Services.AddScoped<UpdatePhoneOTPRequestRepo>();
 builder.Services.AddScoped<UpdateEmailRequestRepo>();
 builder.Services.AddScoped<SubscriptionRepo>();
+builder.Services.AddScoped<NotificationRepo>();
+
 
 
 //defined filters 
@@ -85,6 +94,7 @@ builder.Services.AddTransient<OtpManager>();
 builder.Services.AddTransient<IMessageService, WhatsAppService>();
 builder.Services.AddTransient<IMailingService, MailingService>();
 builder.Services.AddTransient<IFileService, GoogleCloudFileService>();
+builder.Services.AddScoped<FCMService>();
 
 // string MyAllowSpecificOrigins = "_MyAllowSpecificOrigins";
 
@@ -96,7 +106,6 @@ builder.Services.AddTransient<IFileService, GoogleCloudFileService>();
 //         .AllowAnyMethod()
 //         .AllowAnyHeader()
 //         .AllowCredentials();
-
 //     });
 // });
 var app = builder.Build();

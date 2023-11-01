@@ -12,6 +12,7 @@
     <PackageReference Include="dapper" Version="2.0.151" />
     <PackageReference Include="dbup-core" Version="5.0.10" />
     <PackageReference Include="DbUp-Postgresql" Version="5.0.8" />
+    <PackageReference Include="FirebaseAdmin" Version="2.4.0" />
     <PackageReference Include="Google.Cloud.Storage.V1" Version="4.6.0" />
     <PackageReference Include="MailKit" Version="4.2.0" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="7.0.11" />
@@ -30,9 +31,5 @@
   <ItemGroup>
     <EmbeddedResource Include="Migrations\**\*.sql" />
   </ItemGroup>
-  <ItemGroup>
-    <None Remove="Migrations\007_declareTriggerForInsertInPurchaseTable.sql" />
-    <None Remove="Migrations\008_alterUserTableToAddFCMToken.sql" />
-  </ItemGroup>
-
+  
 </Project>

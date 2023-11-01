@@ -20,9 +20,10 @@ public class UserRepo : IUserRepo
     private readonly IMailingService _mailingService;
     private readonly PhotoSettings _photoSettings;
     private readonly OTPSettings _OTPSettings;
+    private readonly NotificationRepo _notificationRepo;
     #endregion
 
-    public UserRepo(IDbConnection dbConnection, IMessageService smsService, IOptions<OTPSettings> OTPSettings, IOptions<PhotoSettings> photoSettings, IFileService fileService, IMailingService mailingService, OtpManager otpManager, UpdatePhoneOTPRequestRepo updatePhoneOTPRequestRepo, UpdateEmailRequestRepo updateEmailRequestRepo)
+    public UserRepo(IDbConnection dbConnection, NotificationRepo notificationRepo, IMessageService smsService, IOptions<OTPSettings> OTPSettings, IOptions<PhotoSettings> photoSettings, IFileService fileService, IMailingService mailingService, OtpManager otpManager, UpdatePhoneOTPRequestRepo updatePhoneOTPRequestRepo, UpdateEmailRequestRepo updateEmailRequestRepo)
     {
         _updatePhoneOTPRequestRepo = updatePhoneOTPRequestRepo;
         _dbConnection = dbConnection;
@@ -33,6 +34,7 @@ public class UserRepo : IUserRepo
         _fileService = fileService;
         _photoSettings = photoSettings.Value;
         _OTPSettings = OTPSettings.Value;
+        _notificationRepo = notificationRepo;
     }
 
 
@@ -64,7 +66,6 @@ public class UserRepo : IUserRepo
                 findUserRes.Error!.Message = "Anonymous User Not Found";
                 return findUserRes;
             }
-
             findUserRes.Data!.Username = otpRequest.Username;
             findUserRes.Data!.Phone = otpRequest.Phone;
             findUserRes.Data!.Last_Login = DateTime.UtcNow;
@@ -73,11 +74,23 @@ public class UserRepo : IUserRepo
             findUserRes.Data!.Is_Anonymous = false;
             if (!string.IsNullOrEmpty(otpRequest.FCM_Token))
                 findUserRes.Data!.FCM_Token = otpRequest.FCM_Token;
-            return await UpdateUser(findUserRes.Data);
+
+
+            var updateUserRes = await UpdateUser(findUserRes.Data);
+            if (updateUserRes.IsSuccess)
+                await _notificationRepo.SendNotificationToUser(new()
+                {
+                    Title = "مرحبا بك في تطبيق قيدها",
+                    Description = "مرحبا بك في تطبيق قيدها. يمكنك الان الاستمتاع بجميع مميزات التطبيق بمجرد الاشتراك في احدي الباقات و بالطبع توجد الباقة المجانية لمدة شهر واحد وستحصل علي جميع مميزات التطبيق من خلالها .",
+                    Action_Path = "",
+                    Action_Type = NotificationActionType.NoAction,
+                    User_Id = updateUserRes.Data!.Id
+                }, otpRequest.FCM_Token ?? "");
+            return updateUserRes;
         }
         else
         {
-            return await AddUser(new User()
+            var AddUserRes = await AddUser(new User()
             {
                 Username = otpRequest.Username,
                 Password_Hash = otpRequest.Password_Hash,
@@ -88,6 +101,16 @@ public class UserRepo : IUserRepo
                 Is_Anonymous = false,
                 FCM_Token = otpRequest.FCM_Token ?? ""
             });
+            if (AddUserRes.IsSuccess)
+                await _notificationRepo.SendNotificationToUser(new()
+                {
+                    Title = "مرحبا بك في تطبيق قيدها",
+                    Description = "مرحبا بك في تطبيق قيدها. يمكنك الان الاستمتاع بجميع مميزات التطبيق بمجرد الاشتراك في احدي الباقات و بالطبع توجد الباقة المجانية لمدة شهر واحد وستحصل علي جميع مميزات التطبيق من خلالها .",
+                    Action_Path = "",
+                    Action_Type = NotificationActionType.NoAction,
+                    User_Id = AddUserRes.Data!.Id
+                }, otpRequest.FCM_Token ?? "");
+            return AddUserRes;
         }
     }
 
@@ -342,8 +365,6 @@ public class UserRepo : IUserRepo
     }
     public async Task<OperationResult<bool>> ConfirmEmailUpdate(string code, string requestId)
     {
-
-
         var otp_request = await _updateEmailRequestRepo.FindAsync(requestId);
         if (otp_request is null)
             return new()
@@ -355,11 +376,26 @@ public class UserRepo : IUserRepo
             {
                 Error = new() { Code = ErrorCodes.InvalidOTP, Message = "Invalid OTP." }
             };
+        var getUserRes = await FindUserById(otp_request.User_Id.ToString());
+        if (!getUserRes.IsSuccess)
+            return new() { Error = getUserRes.Error };
         var updateEmailSuccess = await UpdateUserPropertyById(otp_request.User_Id.ToString(), "email", otp_request.Email);
         var updateIsEmailConfirmedSuccess = await UpdateUserPropertyById(otp_request.User_Id.ToString(), "is_email_confirmed", true);
 
         if (!updateEmailSuccess || !updateIsEmailConfirmedSuccess)
             return new() { Error = new() { Code = ErrorCodes.UserNotFound, Message = "User Not Found" } };
+
+
+        await _notificationRepo.SendNotificationToUser(new()
+        {
+            Title = "تم تعديل الايميل بنجاح",
+            Description = $"تم تعديل البريد الالكتروني الخاص بك الي : {otp_request.Email}",
+            Action_Path = "",
+            Action_Type = NotificationActionType.NoAction,
+            User_Id = otp_request.User_Id
+        }, getUserRes.Data!.FCM_Token ?? "");
+
+
         return new() { Data = true, Message = "Email updated successfully" };
     }
     public async Task<OperationResult<User>> UploadUserPhoto(string userId, IFormFile file)
