@@ -194,4 +194,16 @@ public class UserController : ControllerBase
         return Ok(res.Message);
     }
 
+    [HttpPatch("me/update-fcm-token")]
+    public async Task<IActionResult> UpdateUsersFCMToken([FromBody] ChangeUserFCMTokenDto changeUserFCMTokenDto)
+    {
+        string? userIdStr = User.Claims.FirstOrDefault(c => c.Type == "userId")?.Value;
+        if (userIdStr is null)
+            return BadRequest(new Error() { Code = ErrorCodes.InvalidToken, Message = "Invalid token user id not provided" });
+        if (!Guid.TryParse(userIdStr, out Guid userId))
+            return BadRequest(new Error() { Code = ErrorCodes.InvalidToken, Message = "Invalid token user id Incorrect" });
+        if (!await _userRepo.UpdateUserPropertyById(userId.ToString(), "FCM_Token", changeUserFCMTokenDto.FCMToken))
+            return BadRequest(new Error() { Code = ErrorCodes.UserNotFound, Message = "Failed To Update FCM token of the user" });
+        return Ok(new { Message = "FCM Updated Successfully" });
+    }
 }

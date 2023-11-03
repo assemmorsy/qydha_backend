@@ -72,10 +72,27 @@ public class AuthController : ControllerBase
         return Ok(new { opRes.Data, opRes.Message });
     }
 
+    [Authorize]
+    [HttpPost("logout/")]
+    public async Task<IActionResult> Logout()
+    {
+        string? userIdStr = User.Claims.FirstOrDefault(c => c.Type == "userId")?.Value;
+        if (userIdStr is null)
+            return BadRequest(new Error() { Code = ErrorCodes.InvalidToken, Message = "Invalid token user id not provided" });
+        if (!Guid.TryParse(userIdStr, out Guid userId))
+            return BadRequest(new Error() { Code = ErrorCodes.InvalidToken, Message = "Invalid token user id Incorrect" });
+        var logoutRes = await _authRepo.Logout(userId);
+        if (!logoutRes.IsSuccess)
+            return BadRequest(logoutRes.Error);
+        return Ok(new { logoutRes.Message });
+    }
+
     [HttpGet()]
     public IActionResult TestDeploy()
     {
         return Ok(new { Message = "Deployed. ✔️✔️" });
     }
+
+
 }
 

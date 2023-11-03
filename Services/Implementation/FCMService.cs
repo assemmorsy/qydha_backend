@@ -15,9 +15,21 @@ public class FCMService
                 Body = body
             }
         };
-        var res = await FirebaseMessaging.DefaultInstance.SendAsync(msg);
+        try
+        {
+            var res = await FirebaseMessaging.DefaultInstance.SendAsync(msg);
+        }
+        catch (FirebaseMessagingException exp)
+        {
+            switch (exp.MessagingErrorCode)
+            {
+                case MessagingErrorCode.Unregistered:
+                    // TODO :: DELETE THIS FCM TOKEN
+                    break;
+            }
+        }
         // TODO log errors
-        Console.WriteLine(res);
+        // Console.WriteLine(res);
     }
     public async Task SendPushNotificationToAllUsers(string title, string body)
     {
@@ -49,4 +61,8 @@ public class FCMService
         // TODO log errors
         // Console.WriteLine(res);
     }
+}
+
+internal class FirebaseMessageing
+{
 }

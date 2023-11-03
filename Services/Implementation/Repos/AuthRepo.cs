@@ -117,6 +117,12 @@ public class AuthRepo : IAuthRepo
             {
                 Error = new() { Code = ErrorCodes.UserNotFound, Message = "User not found to update last login " }
             };
+        if (!string.IsNullOrEmpty(dto.FCMToken))
+            if (!await _userRepo.UpdateUserPropertyById(user.Id.ToString(), "FCM_Token", dto.FCMToken))
+                return new()
+                {
+                    Error = new() { Code = ErrorCodes.UserNotFound, Message = "User not found to fcm Token " }
+                };
 
         var claims = new List<Claim>()
             {
@@ -183,4 +189,10 @@ public class AuthRepo : IAuthRepo
         };
     }
 
+    public async Task<OperationResult<bool>> Logout(Guid userId)
+    {
+        if (!await _userRepo.UpdateUserPropertyById(userId.ToString(), "FCM_Token", ""))
+            return new() { Error = new Error() { Code = ErrorCodes.UserNotFound, Message = "Failed To Update FCM token of the user" } };
+        return new() { Message = "FCM Updated Successfully", Data = true };
+    }
 }

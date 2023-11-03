@@ -13,4 +13,6 @@ public class UserLoginDto
     [RegularExpression(InputValidators.Password.Pattern, ErrorMessage = InputValidators.Password.ErrorMessage)]
     public string Password { get; set; } = string.Empty;
 
+    public string FCMToken { get; set; } = string.Empty;
+
 }
