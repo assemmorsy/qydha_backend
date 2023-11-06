@@ -6,9 +6,7 @@ public class BirthDateAttribute : ValidationAttribute
 
     public override bool IsValid(object? value)
     {
-        if (value is null)
-            return true;
-
+       
         if (value is not null && value is DateTime birthDate)
         {
             // Calculate the date 7 years ago from now

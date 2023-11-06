@@ -8,18 +8,18 @@ public static class InputValidators
     public static class Name
     {
         public const string Pattern = @"^[A-Za-z\u0621-\u064A0-9\s]{4,}$";
-        public const string ErrorMessage = "Name should contain at least 4 characters and can only contain Arabic, English alphabet characters, numbers, or spaces.";
+        public const string ErrorMessage = "يجب ان يحتوى الاسم علي 4 حروف علي الاقل";
     }
 
     public static class Email
     {
         public const string Pattern = @"^\w+([-+.']\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*$";
-        public const string ErrorMessage = "Invalid email format.";
+        public const string ErrorMessage = "برجاء ادخال بريد الكتروني صحيح";
     }
     public static class Username
     {
-        public const string Pattern = @"^[a-z0-9_.-]{3,20}$";
-        public const string ErrorMessage = "Username must be 3 to 20 characters long and can contain letters, numbers, underscores, and periods.";
+        public const string Pattern = @"^[a-z0-9_.-]{3,100}$";
+        public const string ErrorMessage = "يجب ان يحتوي اسم المستخدم علي 3 حروف علي الاقل ";
     }
 
     public static class OTPCode
@@ -39,13 +39,13 @@ public static class InputValidators
     public static class Password
     {
         public const string Pattern = @"^(?=.*[a-zA-Z])(?=.*\d).{6,}$";
-        public const string ErrorMessage = "Password must meet the strength criteria.";
+        public const string ErrorMessage = "يجب ان تحتوى كلمة المرور علي 6 حروف علي الاقل";
 
     }
 
     public static class Phone
     {
-        public const string ErrorMessage = "Phone number must start with a plus sign (+) followed by the Country Code then a valid the phone number.";
+        public const string ErrorMessage = "برجاء ادخال رقم جوال صحيح ويستخدم تطبيق الواتس اب";
     }
 
 }

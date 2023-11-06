@@ -3,5 +3,4 @@
 public class ChangeUserFCMTokenDto
 {
     public string FCMToken { get; set; } = string.Empty;
-
 }

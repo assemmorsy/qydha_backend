@@ -4,6 +4,7 @@ using Qydha.Controllers.Attributes;
 using Qydha.Models;
 using Qydha.Services;
 using Qydha.Mappers;
+using Microsoft.AspNetCore.JsonPatch;
 namespace Qydha.Controllers;
 
 [ApiController]
@@ -134,19 +135,30 @@ public class UserController : ControllerBase
         return Ok(new { Data = mapper.UserToUserDto(uploadUserPhotoRes.Data!), Message = uploadUserPhotoRes.Message });
     }
 
-    [HttpPut("me/")]
-    public async Task<IActionResult> UpdateUserData(UpdateUserDto updateUserDto)
+    [HttpPatch("me/")]
+    public async Task<IActionResult> UpdateUserData([FromBody] JsonPatchDocument<UpdateUserDto> updateUserDtoPatch)
     {
+        if (updateUserDtoPatch is null)
+            return BadRequest(new Error() { Code = ErrorCodes.InvalidInput, Message = "No Patch Data Found" });
+
         string? userId = User.Claims.FirstOrDefault(c => c.Type == "userId")?.Value;
         if (userId is null)
             return BadRequest(new Error() { Code = ErrorCodes.InvalidToken, Message = "Invalid token user id not provided" });
         var getUserRes = await _userRepo.FindUserById(userId);
         if (!getUserRes.IsSuccess)
             return BadRequest(getUserRes.Error);
+
         var user = getUserRes.Data;
 
-        user!.Name = updateUserDto.Name;
-        user!.Birth_Date = updateUserDto.BirthDate;
+        var dto = new UpdateUserDto() { Name = user!.Name ?? "", BirthDate = user.Birth_Date };
+
+        updateUserDtoPatch.ApplyTo(dto, ModelState);
+
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+
+        user!.Name = dto.Name;
+        user!.Birth_Date = dto.BirthDate;
 
         var updateUserRes = await _userRepo.UpdateUser(user);
         if (!updateUserRes.IsSuccess)
@@ -181,6 +193,7 @@ public class UserController : ControllerBase
         if (!res.IsSuccess) return BadRequest(res.Error);
         return Ok(new { res.Data, res.Message });
     }
+
     [HttpPatch("me/notifications/{notificationId}/mark-as-read/")]
     public async Task<IActionResult> MarkNotificationAsRead([FromRoute] int notificationId)
     {

@@ -5,7 +5,6 @@ using Qydha.Helpers;
 namespace Qydha.Models;
 public class UpdateUserDto
 {
-    [Required]
     [RegularExpression(InputValidators.Name.Pattern, ErrorMessage = InputValidators.Name.ErrorMessage)]
     public string Name { get; set; } = string.Empty;
 

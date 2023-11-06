@@ -1,13 +1,9 @@
-﻿
-using System.Security.Claims;
+﻿using System.Security.Claims;
 using Microsoft.Extensions.Options;
 using Qydha.Entities;
 using Qydha.Helpers;
 using Qydha.Mappers;
 using Qydha.Models;
-
-
-
 
 namespace Qydha.Services;
 
