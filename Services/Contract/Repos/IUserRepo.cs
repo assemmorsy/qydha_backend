@@ -24,5 +24,7 @@ public interface IUserRepo
     Task<OperationResult<bool>> ConfirmEmailUpdate(string code, string requestId);
     Task<OperationResult<User>> UploadUserPhoto(string userId, IFormFile file);
     Task<OperationResult<bool>> DeleteUser(string userId, string password);
+    Task<OperationResult<bool>> DeleteAnonymousUser(string userId);
+
 
 }

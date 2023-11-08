@@ -181,6 +181,20 @@ public class UserController : ControllerBase
         return Ok(new { deleteUserRes.Message });
     }
 
+    [HttpDelete("me/delete-anonymous")]
+    public async Task<IActionResult> DeleteAnonymousUser()
+    {
+        string? userId = User.Claims.FirstOrDefault(c => c.Type == "userId")?.Value;
+        if (userId is null)
+            return BadRequest(new Error() { Code = ErrorCodes.InvalidToken, Message = "Invalid token user id not provided" });
+
+        var deleteUserRes = await _userRepo.DeleteAnonymousUser(userId);
+        if (!deleteUserRes.IsSuccess)
+            return BadRequest(deleteUserRes.Error);
+
+        return Ok(new { deleteUserRes.Message });
+    }
+
     [HttpGet("me/notifications")]
     public async Task<IActionResult> GetUserNotifications([FromQuery] int pageSize = 10, [FromQuery] int pageNumber = 1, [FromQuery] bool? isRead = null)
     {

@@ -450,6 +450,26 @@ public class UserRepo : IUserRepo
             Message = "User Deleted Successfully"
         };
     }
+
+    public async Task<OperationResult<bool>> DeleteAnonymousUser(string userId)
+    {
+        var findUserRes = await FindUserById(userId);
+        if (!findUserRes.IsSuccess) return new() { Error = findUserRes.Error };
+        var user = findUserRes.Data;
+        if (!user!.Is_Anonymous)
+            return new() { Error = new() { Code = ErrorCodes.InvalidDeleteOnRegularUser, Message = "Can't Delete a Regular User" } };
+
+        var sql = @"Delete from Users
+                    WHERE id = @Id;";
+                    
+        var effectedRows = await _dbConnection.ExecuteAsync(sql, new { user.Id });
+        if (effectedRows != 1) return new() { Error = new Error() { Code = ErrorCodes.UserNotFound, Message = "User Not Found" } };
+        return new()
+        {
+            Data = true,
+            Message = "User Deleted Successfully"
+        };
+    }
     #endregion
 
 }

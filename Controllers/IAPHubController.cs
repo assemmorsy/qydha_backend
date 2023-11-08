@@ -57,7 +57,8 @@ public class IAPHubController : ControllerBase
                 return Ok(saveRes.Message);
             default:
                 //TODO log any type that should be handled
-                return BadRequest(new Error() { Code = ErrorCodes.UnhandledIAPHubTransactionType, Message = "Unhandled IAPHub Transaction Type." });
+                return Ok();
+                // return BadRequest(new Error() { Code = ErrorCodes.UnhandledIAPHubTransactionType, Message = "Unhandled IAPHub Transaction Type." });
         }
     }
 

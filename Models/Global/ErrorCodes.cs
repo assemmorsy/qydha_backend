@@ -9,6 +9,8 @@ public static class ErrorCodes
     public const string AnonymousUserNotFound = "4041";
     public const string UserNotFound = "4042";
     public const string RegistrationRequestNotFound = "4043";
+    public const string InvalidDeleteOnRegularUser = "4091";
+
     public const string InvalidIAPHupToken = "4092";
     public const string EmailSendingError = "4093";
     public const string InvalidToken = "4094";
