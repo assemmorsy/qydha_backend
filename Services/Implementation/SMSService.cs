@@ -9,9 +9,11 @@ namespace Qydha.Services;
 public class SMSService : IMessageService
 {
     private readonly TwilioSettings _twilio;
-    public SMSService(IOptions<TwilioSettings> twilio)
+    private readonly ILogger<SMSService> _logger;
+    public SMSService(IOptions<TwilioSettings> twilio, ILogger<SMSService> logger)
     {
         _twilio = twilio.Value;
+        _logger = logger;
     }
     public async Task<OperationResult<bool>> SendAsync(string phoneNum, string otp)
     {
@@ -23,6 +25,9 @@ public class SMSService : IMessageService
         );
 
         if (!string.IsNullOrEmpty(result.ErrorMessage))
+        {
+            _logger.LogError("can't send the SMS", result);
+
             return new()
             {
                 Error = new()
@@ -31,6 +36,7 @@ public class SMSService : IMessageService
                     Message = $"OTP Error Code :: {result.ErrorCode} => message :: {result.ErrorMessage}"
                 }
             };
+        }
         return new()
         {
             Data = true,

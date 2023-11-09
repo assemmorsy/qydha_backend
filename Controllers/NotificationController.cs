@@ -9,7 +9,6 @@ namespace Qydha.Controllers;
 [ApiController]
 [Route("notifications/")]
 [ValidateModel]
-[ExceptionHandler]
 [Authorize]
 public class NotificationController : ControllerBase
 {

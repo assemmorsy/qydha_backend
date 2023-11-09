@@ -4,6 +4,11 @@ namespace Qydha.Services;
 
 public class FCMService
 {
+    private readonly ILogger<FCMService> _logger;
+    public FCMService(ILogger<FCMService> logger)
+    {
+        _logger = logger;
+    }
     public async Task SendPushNotificationToUser(string userFcmToken, string title, string body)
     {
         var msg = new Message()
@@ -26,10 +31,11 @@ public class FCMService
                 case MessagingErrorCode.Unregistered:
                     // TODO :: DELETE THIS FCM TOKEN
                     break;
+                default:
+                    _logger.LogError("unhandled error in FCM sendToUser", exp);
+                    break;
             }
         }
-        // TODO log errors
-        // Console.WriteLine(res);
     }
     public async Task SendPushNotificationToAllUsers(string title, string body)
     {
@@ -42,12 +48,18 @@ public class FCMService
                 Body = body
             }
         };
-        var res = await FirebaseMessaging.DefaultInstance.SendAsync(msg);
-        // TODO log errors
-        // Console.WriteLine(res);
+        try
+        {
+            var res = await FirebaseMessaging.DefaultInstance.SendAsync(msg);
+        }
+        catch (Exception exp)
+        {
+            _logger.LogError("unhandled error in FCM sendToAllUser", exp);
+        }
     }
     public async Task SendPushNotificationToGroupOfUsers(string topicName, string title, string body)
     {
+        //TODO Handle send to group of users 
         var msg = new Message()
         {
             Topic = topicName,
@@ -58,11 +70,7 @@ public class FCMService
             }
         };
         var res = await FirebaseMessaging.DefaultInstance.SendAsync(msg);
-        // TODO log errors
-        // Console.WriteLine(res);
+
     }
 }
 
-internal class FirebaseMessageing
-{
-}

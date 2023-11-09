@@ -10,7 +10,6 @@ namespace Qydha.Controllers;
 [ApiController]
 [Route("users/")]
 [ValidateModel]
-[ExceptionHandler]
 [Authorize]
 public class UserController : ControllerBase
 {

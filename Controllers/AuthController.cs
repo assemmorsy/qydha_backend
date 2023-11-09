@@ -9,7 +9,6 @@ namespace Qydha.Controllers;
 [ApiController]
 [Route("/auth")]
 [ValidateModel]
-[ExceptionHandler]
 public class AuthController : ControllerBase
 {
     private readonly IAuthRepo _authRepo;

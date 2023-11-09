@@ -6,17 +6,21 @@ namespace Qydha.Controllers.Attributes;
 
 public class ExceptionHandlerAttribute : ExceptionFilterAttribute
 {
+    private readonly ILogger<ExceptionHandlerAttribute> _logger;
+    public ExceptionHandlerAttribute(ILogger<ExceptionHandlerAttribute> logger)
+    {
+        _logger = logger;
+    }
     public override void OnException(ExceptionContext context)
     {
 
         var Exception = context.Exception;
-        Console.WriteLine(Exception);
+        _logger.LogError(Exception, "Error caught by Exception Filter ");
         while (Exception.InnerException != null)
         {
             Exception = Exception.InnerException;
         }
 
-        // TODO :: DO SOME LOGGING HERE 
         context.Result = new BadRequestObjectResult(new Error()
         {
             Message = Exception.Message,

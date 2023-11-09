@@ -5,11 +5,14 @@ namespace Qydha.Services;
 
 public class GoogleCloudFileService : IFileService
 {
+
     private readonly StorageClient _client;
     private readonly string bucketName = "qydha_bucket";
-    public GoogleCloudFileService()
+    private readonly ILogger<GoogleCloudFileService> _logger;
+    public GoogleCloudFileService(ILogger<GoogleCloudFileService> logger)
     {
         _client = StorageClient.Create();
+        _logger = logger;
     }
     public async Task<OperationResult<bool>> DeleteFile(string path)
     {
@@ -20,6 +23,7 @@ public class GoogleCloudFileService : IFileService
         }
         catch (Exception e)
         {
+            _logger.LogError("Can't Delete File", e);
             return new() { Error = new Error() { Code = ErrorCodes.FileDeleteError, Message = e.Message } };
         }
     }
@@ -44,6 +48,7 @@ public class GoogleCloudFileService : IFileService
         }
         catch (Exception e)
         {
+            _logger.LogError("Can't Upload File", e);
             return new() { Error = new Error() { Code = ErrorCodes.FileUploadError, Message = e.Message } };
         }
     }

@@ -7,9 +7,12 @@ namespace Qydha.Services;
 public class WhatsAppService : IMessageService
 {
     private readonly WhatsAppSettings _whatsSettings;
-    public WhatsAppService(IOptions<WhatsAppSettings> whatsSettings)
+    private readonly ILogger<WhatsAppService> _logger;
+
+    public WhatsAppService(IOptions<WhatsAppSettings> whatsSettings, ILogger<WhatsAppService> logger)
     {
         _whatsSettings = whatsSettings.Value;
+        _logger = logger;
     }
     public async Task<OperationResult<bool>> SendAsync(string phoneNum, string otp)
     {
@@ -62,9 +65,11 @@ public class WhatsAppService : IMessageService
         };
 
         HttpResponseMessage response = await httpClient.PostAsJsonAsync(new Uri(_whatsSettings.ApiUrl), body);
-        // TODO log this error
         if (!response.IsSuccessStatusCode)
+        {
+            _logger.LogError($"ERROR From WhatsApp Service: {response.Content.ToString() ?? "unknown Error from whatsapp."} ", response);
             return new() { Error = new() { Code = ErrorCodes.OTPSendingError, Message = response.Content.ToString() ?? "unknown Error from whatsapp." } };
+        }
 
         return new OperationResult<bool>() { Data = true, Message = "Message Sent Successfully." };
     }

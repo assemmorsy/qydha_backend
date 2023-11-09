@@ -9,6 +9,9 @@ using Qydha.Controllers.Attributes;
 using Qydha.Helpers;
 // using Qydha.Hubs;
 using Qydha.Services;
+using Serilog;
+using Serilog.Events;
+using Serilog.Formatting.Json;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,12 +23,26 @@ FirebaseApp.Create(new AppOptions()
 
 var connectionString = builder.Configuration.GetConnectionString("postgres");
 // builder.Services.AddSignalR();
-builder.Services.AddControllers().AddNewtonsoftJson();
+builder.Services.AddControllers((options) =>
+{
+    options.Filters.Add<ExceptionHandlerAttribute>();
+}).AddNewtonsoftJson();
 //  Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+//Add Serilog
+Log.Logger =
+    new LoggerConfiguration().ReadFrom.Configuration(builder.Configuration)
+    .MinimumLevel.Information()
+    .MinimumLevel.Override("Microsoft.AspNetCore", LogEventLevel.Warning)
+    .WriteTo.Console()
+    .WriteTo.File(new JsonFormatter(), "./logs/qydha_.json", rollingInterval: RollingInterval.Day, restrictedToMinimumLevel: LogEventLevel.Warning)
+    .CreateLogger();
+builder.Host.UseSerilog();
 
+
+#region DI settings
 // otp options  
 builder.Services.Configure<OTPSettings>(builder.Configuration.GetSection("OTP"));
 // twilio options 
@@ -68,6 +85,10 @@ builder.Services.AddAuthentication("Bearer")
 // db connection
 builder.Services.AddScoped<IDbConnection, NpgsqlConnection>(
     sp => new NpgsqlConnection(connectionString));
+
+#endregion
+
+#region DI Repos
 // repos 
 builder.Services.AddScoped<IUserRepo, UserRepo>();
 builder.Services.AddScoped<IAuthRepo, AuthRepo>();
@@ -76,8 +97,9 @@ builder.Services.AddScoped<UpdatePhoneOTPRequestRepo>();
 builder.Services.AddScoped<UpdateEmailRequestRepo>();
 builder.Services.AddScoped<SubscriptionRepo>();
 builder.Services.AddScoped<NotificationRepo>();
+#endregion
 
-
+#region Filters
 
 //defined filters 
 builder.Services.AddScoped<ValidateModelAttribute>();
@@ -88,6 +110,9 @@ builder.Services.Configure<ApiBehaviorOptions>(options =>
     options.SuppressModelStateInvalidFilter = true;
 });
 
+#endregion
+
+#region DI Services
 // services 
 builder.Services.AddScoped<TokenManager>();
 builder.Services.AddTransient<OtpManager>();
@@ -95,7 +120,9 @@ builder.Services.AddTransient<IMessageService, WhatsAppService>();
 builder.Services.AddTransient<IMailingService, MailingService>();
 builder.Services.AddTransient<IFileService, GoogleCloudFileService>();
 builder.Services.AddScoped<FCMService>();
+#endregion
 
+#region ADD Cors
 // string MyAllowSpecificOrigins = "_MyAllowSpecificOrigins";
 
 // builder.Services.AddCors(options =>
@@ -108,6 +135,9 @@ builder.Services.AddScoped<FCMService>();
 //         .AllowCredentials();
 //     });
 // });
+#endregion
+
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -120,6 +150,9 @@ if (app.Environment.IsDevelopment())
 // app.UseCors(MyAllowSpecificOrigins);
 app.UseStaticFiles();
 
+// app.UseHttpLogging();
+
+app.UseSerilogRequestLogging(); // <-- Add this line
 
 app.UseAuthentication();
 
@@ -132,6 +165,3 @@ if (connectionString is not null)
     DbMigrator.Migrate(connectionString);
 
 app.Run();
-
-
-

@@ -11,9 +11,11 @@ namespace Qydha.Services;
 public class MailingService : IMailingService
 {
     private readonly EmailSettings _mailSettings;
-    public MailingService(IOptions<EmailSettings> mailSettings)
+    private readonly ILogger<MailingService> _logger;
+    public MailingService(IOptions<EmailSettings> mailSettings, ILogger<MailingService> logger)
     {
         _mailSettings = mailSettings.Value;
+        _logger = logger;
     }
     public async Task<OperationResult<string>> SendEmailAsync(string mailTo, string subject, string body, IList<IFormFile>? attachments = null)
     {
@@ -55,6 +57,7 @@ public class MailingService : IMailingService
         }
         catch (Exception e)
         {
+            _logger.LogError("can't send the email", e);
             res.Error = new Error() { Message = e.Message, Code = ErrorCodes.EmailSendingError };
         }
 

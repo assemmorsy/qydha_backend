@@ -13,20 +13,21 @@ namespace Qydha.Controllers;
 [ApiController]
 [Route("iaphub/")]
 [ValidateModel]
-[ExceptionHandler]
 public class IAPHubController : ControllerBase
 {
     private readonly IAPHubSettings _iAPHubSettings;
     private readonly SubscriptionRepo _subscriptionRepo;
     private readonly ProductsSettings _productsSettings;
     private readonly IUserRepo _userRepo;
+    private readonly ILogger<IAPHubController> _logger;
 
-    public IAPHubController(IUserRepo userRepo, IOptions<IAPHubSettings> iaphubSettings, SubscriptionRepo subscriptionRepo, IOptions<ProductsSettings> productSettings)
+    public IAPHubController(IUserRepo userRepo, ILogger<IAPHubController> logger, IOptions<IAPHubSettings> iaphubSettings, SubscriptionRepo subscriptionRepo, IOptions<ProductsSettings> productSettings)
     {
         _iAPHubSettings = iaphubSettings.Value;
         _subscriptionRepo = subscriptionRepo;
         _productsSettings = productSettings.Value;
         _userRepo = userRepo;
+        _logger = logger;
     }
     [HttpPost]
     public async Task<IActionResult> IApHubWebHook([FromBody] WebHookDto webHookDto)
@@ -39,9 +40,11 @@ public class IAPHubController : ControllerBase
         switch (webHookDto.Type)
         {
             case "purchase":
-                // TODO :: log  that ISSue
                 if (!_productsSettings.ProductsSku.TryGetValue(webHookDto.Data!.ProductSku, out int numberOfDays))
+                {
+                    _logger.LogWarning($"Invalid ProductSku {webHookDto.Data!.ProductSku} from Purchase ");
                     return BadRequest(new Error() { Code = ErrorCodes.InvalidInput, Message = "Invalid Product sku" });
+                }
 
                 var purchase = new Purchase()
                 {
@@ -56,9 +59,8 @@ public class IAPHubController : ControllerBase
                 if (!saveRes.IsSuccess) return BadRequest(saveRes.Error);
                 return Ok(saveRes.Message);
             default:
-                //TODO log any type that should be handled
+                _logger.LogWarning($"Unhandled IAPHUB Action Type : {webHookDto.Type}", webHookDto);
                 return Ok();
-                // return BadRequest(new Error() { Code = ErrorCodes.UnhandledIAPHubTransactionType, Message = "Unhandled IAPHub Transaction Type." });
         }
     }
 
