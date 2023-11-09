@@ -24,7 +24,7 @@ public class RegistrationOTPRequestRepo
 
     public async Task<RegistrationOTPRequest?> FindAsync(string reqId)
     {
-        var sql = @"select *  from registration_otp_request where id = @requestId";
+        var sql = @"select *  from registration_otp_request where id = @requestId ;";
         var otp_request = await _dbConnection.QuerySingleOrDefaultAsync<RegistrationOTPRequest?>(sql, new { requestId = Guid.Parse(reqId) });
         return otp_request;
     }

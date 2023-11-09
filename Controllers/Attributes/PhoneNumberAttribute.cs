@@ -16,8 +16,9 @@ public class PhoneNumberAttribute : ValidationAttribute
         var UAEPattern = @"^(\+971)[2-9]\d{8}$";
         var QatarPattern = @"^(\+974)[3567]\d{7}$"; ;
         var KuwaitPattern = @"^(\+965)[569]\d{7}$";
+        var OmanPattern = @"^(\+968)[0-9]{8}$";
 
-        patterns = new string[] { EgyptPattern, SaudiArabiaPattern, IraqPattern, JordanPattern, BahrainPattern, UAEPattern, QatarPattern, KuwaitPattern };
+        patterns = new string[] { EgyptPattern, SaudiArabiaPattern, IraqPattern, JordanPattern, BahrainPattern, OmanPattern, UAEPattern, QatarPattern, KuwaitPattern };
     }
 
     public override bool IsValid(object? value)
@@ -26,7 +27,7 @@ public class PhoneNumberAttribute : ValidationAttribute
         {
             foreach (var pattern in patterns)
             {
-                Regex regex = new (pattern);
+                Regex regex = new(pattern);
                 if (regex.IsMatch(phoneNumber))
                 {
                     return true;

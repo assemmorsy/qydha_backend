@@ -18,8 +18,8 @@ public static class InputValidators
     }
     public static class Username
     {
-        public const string Pattern = @"^[a-z0-9_.-]{3,100}$";
-        public const string ErrorMessage = "يجب ان يحتوي اسم المستخدم علي 3 حروف علي الاقل ";
+        public const string Pattern = @"^[a-zA-Z0-9_.-]{2,100}$";
+        public const string ErrorMessage = "يجب ان يحتوي اسم المستخدم علي حرفين علي الاقل ";
     }
 
     public static class OTPCode
