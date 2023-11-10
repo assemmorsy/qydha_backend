@@ -38,8 +38,6 @@
 	<ItemGroup>
       <Content Include="Templates\**" CopyToPublishDirectory="PreserveNewest"/>
   </ItemGroup>
-  <ItemGroup>
-      <Content Include="firebase_private_key.json" CopyToPublishDirectory="PreserveNewest"/>
-  </ItemGroup>
+
   
 </Project>
