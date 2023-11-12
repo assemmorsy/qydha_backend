@@ -238,7 +238,7 @@ public class UserRepo : IUserRepo
                 Error = new()
                 {
                     Code = ErrorCodes.DbUniqueViolation,
-                    Message = "Username is already used."
+                    Message = "هذا الاسم موجود بالفعل برجاء ادخال اسم مستخدم اخر."
                 }
             };
         var findUserRes = await FindUserById(userId);
@@ -261,7 +261,7 @@ public class UserRepo : IUserRepo
                 Error = new()
                 {
                     Code = ErrorCodes.DbUniqueViolation,
-                    Message = "Phone is already used."
+                    Message = "هذا الرقم موجود بالفعل برجاء ادخال رقم جوال اخر "
                 }
             };
         var findUserRes = await FindUserById(userId);
@@ -332,7 +332,7 @@ public class UserRepo : IUserRepo
                 Error = new()
                 {
                     Code = ErrorCodes.DbUniqueViolation,
-                    Message = "Email is already used."
+                    Message = "هذا البريد موجود بالفعل برجاء ادخال بريد الكترونى اخر "
                 }
             };
 
@@ -461,7 +461,7 @@ public class UserRepo : IUserRepo
 
         var sql = @"Delete from Users
                     WHERE id = @Id;";
-                    
+
         var effectedRows = await _dbConnection.ExecuteAsync(sql, new { user.Id });
         if (effectedRows != 1) return new() { Error = new Error() { Code = ErrorCodes.UserNotFound, Message = "User Not Found" } };
         return new()

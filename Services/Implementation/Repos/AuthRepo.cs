@@ -146,7 +146,7 @@ public class AuthRepo : IAuthRepo
                 Error = new()
                 {
                     Code = ErrorCodes.DbUniqueViolation,
-                    Message = "Username is already used."
+                    Message = "هذا الاسم موجود بالفعل برجاء ادخال اسم مستخدم اخر."
                 }
             };
         if (await _userRepo.IsPhoneUsed(dto.Phone))
@@ -155,7 +155,7 @@ public class AuthRepo : IAuthRepo
                 Error = new()
                 {
                     Code = ErrorCodes.DbUniqueViolation,
-                    Message = "phone number is already used."
+                    Message = "هذا الرقم موجود بالفعل برجاء ادخال رقم جوال اخر."
                 }
             };
 
