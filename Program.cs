@@ -165,5 +165,3 @@ if (connectionString is not null)
     DbMigrator.Migrate(connectionString);
 
 app.Run();
-
-//test dev branch
