@@ -130,8 +130,8 @@ public class UserRepo : IUserRepo
     }
     public async Task<OperationResult<User>> FindUserByUsername(string username)
     {
-        var sql = "select  *  from Users where username = @username;";
-        User? user = await _dbConnection.QuerySingleOrDefaultAsync<User>(sql, new { username });
+        var sql = "select  *  from Users where lower( username ) = @username;";
+        User? user = await _dbConnection.QuerySingleOrDefaultAsync<User>(sql, new { username = username.ToLower() });
         if (user is null) return new() { Error = new() { Code = ErrorCodes.UserNotFound, Message = "User Not Found" } };
         return new()
         {
